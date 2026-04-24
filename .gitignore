@@ -1,0 +1,7 @@
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Optional: keep the pool out of git (use Releases / external hosting + playlist URLs).
+# Remove the next line if you commit Renders/ to this repo (watch GitHub file size limits).
+/Renders/

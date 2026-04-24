@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Renders Radio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="config.js"></script>
+  </head>
+  <body>
+    <main>
+      <h1>Live from the archive</h1>
+      <p class="station-name">Renders Radio</p>
+      <div class="now-label">Now playing</div>
+      <div id="now-playing">Loading playlist…</div>
+      <div id="path-hint"></div>
+      <div class="controls">
+        <button type="button" id="btn-play">Play</button>
+        <button type="button" id="btn-skip">Skip</button>
+      </div>
+      <label class="volume">
+        <span>Vol</span>
+        <input type="range" id="volume" min="0" max="1" step="0.02" value="0.9" />
+      </label>
+      <div id="status" class="status"></div>
+      <footer>
+        Playlist is built from the archive <code>Renders</code> pool. Serve
+        <code>Music_Archives</code> as the HTTP root locally, or publish
+        <code>Renders/</code> next to <code>radio/</code> on GitHub Pages and
+        rebuild with matching <code>-HttpRoot</code> (see
+        <code>build-playlist.ps1</code>).
+      </footer>
+    </main>
+    <audio id="player" preload="metadata"></audio>
+    <script src="app.js"></script>
+  </body>
+</html>

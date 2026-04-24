@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Renders Radio</title>
+    <title>RozKyler Archives</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,7 +16,7 @@
   <body>
     <main id="radio-panel">
       <h1>Live from the archive</h1>
-      <p class="station-name">Renders Radio</p>
+      <p class="station-name">RozKyler Archives</p>
       <p class="track-count" id="track-count" aria-live="polite">Loading…</p>
       <div class="now-label">Now playing</div>
       <div class="now-row">
@@ -74,7 +74,19 @@
       </label>
       <div id="status" class="status"></div>
       <section class="history-block" aria-labelledby="history-heading">
-        <h2 id="history-heading" class="history-heading">Play history</h2>
+        <div class="history-heading-row">
+          <h2 id="history-heading" class="history-heading">Play history</h2>
+          <button
+            type="button"
+            id="btn-share-history"
+            class="btn-share-history"
+            disabled
+            aria-label="Share play history"
+            title="Share play history"
+          >
+            Share
+          </button>
+        </div>
         <p id="history-empty" class="history-empty">Plays group here by similar titles.</p>
         <div id="history-list" class="history-list" hidden></div>
       </section>
@@ -85,6 +97,30 @@
         <code>like-discord-setup.txt</code>.
       </footer>
     </main>
+    <div
+      id="share-history-sheet"
+      class="share-sheet"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="share-history-title"
+    >
+      <button type="button" class="share-sheet-backdrop" id="share-history-backdrop" aria-label="Close share"></button>
+      <div class="share-sheet-panel">
+        <h3 id="share-history-title" class="share-sheet-title">Share play history</h3>
+        <p class="share-sheet-hint">Plain text or a small .txt file — good for messages and notes.</p>
+        <div class="share-sheet-actions">
+          <button type="button" id="share-history-native" class="share-sheet-btn share-sheet-btn-primary">
+            Share…
+          </button>
+          <button type="button" id="share-history-copy" class="share-sheet-btn">Copy text</button>
+          <button type="button" id="share-history-download" class="share-sheet-btn">Download .txt</button>
+          <button type="button" id="share-history-close" class="share-sheet-btn share-sheet-btn-muted">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
     <audio id="player" preload="metadata"></audio>
     <script src="app.js"></script>
   </body>

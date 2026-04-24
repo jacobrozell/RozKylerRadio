@@ -1,4 +1,4 @@
-Discord likes for RozKyler Radio (anonymous)
+Discord likes for RozKyler Archives (anonymous)
 
 1) Discord webhook
    - Server -> channel where you want pings -> gear (Edit Channel) -> Integrations -> Webhooks -> New Webhook.

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Build playlist.json for Renders Radio from your consolidated Renders pool or in-project Renders folders.
+  Build playlist.json for RozKyler Archives from your consolidated Renders pool or in-project Renders folders.
 
 .PARAMETER ScanRoot
   Folder to recurse. Default: E:\...\Music_Archives\Renders if that folder exists, else the RozKyler project folder (in-project \Renders\ scan).
@@ -68,6 +68,14 @@ $useWideScan =
     )
   )
 
+function Test-ExcludedRadioTitle {
+  param([string] $TitleWithoutExt)
+  $n = $TitleWithoutExt.ToLowerInvariant()
+  if ($n.Contains("vocals")) { return $true }
+  if ($n.Contains("(rap)")) { return $true }
+  return $false
+}
+
 function Get-UrlPathRelativeToRoot {
   param([string] $FilePath, [string] $RootDir)
   $rootUri = New-Object Uri ((New-Object Uri ($RootDir + [char]0x5c)).AbsoluteUri)
@@ -97,9 +105,11 @@ else {
 }
 
 $tracks = foreach ($f in $files) {
+  $base = [System.IO.Path]::GetFileNameWithoutExtension($f.Name)
+  if (Test-ExcludedRadioTitle -TitleWithoutExt $base) { continue }
   $url = Get-UrlPathRelativeToRoot -FilePath $f.FullName -RootDir $root
   [ordered]@{
-    title = [System.IO.Path]::GetFileNameWithoutExtension($f.Name)
+    title = $base
     src   = $url
   }
 }

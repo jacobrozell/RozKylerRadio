@@ -1,6 +1,6 @@
 {
-    "generated":  "2026-04-23T22:44:03.3157451-05:00",
-    "count":  157,
+    "generated":  "2026-04-24T00:31:43.7689874-05:00",
+    "count":  203,
     "tracks":  [
                    {
                        "title":  "10-14",
@@ -9,6 +9,10 @@
                    {
                        "title":  "Drifting_10min",
                        "src":  "Renders/FromProjects/RozKyler/2020/IndigoTapes/Completed/2020_beat_wip_11/Drifting_10min.mp3"
+                   },
+                   {
+                       "title":  "Drifting_10min",
+                       "src":  "Renders/FromProjects/RozKyler/2020/IndigoTapes/Completed/2020_beat_wip_11/Drifting_10min.wav"
                    },
                    {
                        "title":  "Neon",
@@ -51,6 +55,10 @@
                        "src":  "Renders/FromProjects/RozKyler/2020/IndigoTapes2/Released/Talent/2020_beat_wip/sorry.mp3"
                    },
                    {
+                       "title":  "sorry",
+                       "src":  "Renders/FromProjects/RozKyler/2020/IndigoTapes2/Released/Talent/2020_beat_wip/sorry.wav"
+                   },
+                   {
                        "title":  "UKULELE BEAT",
                        "src":  "Renders/FromProjects/RozKyler/2021/Acoustic/2021_beat_wip_2/UKULELE BEAT.mp3"
                    },
@@ -85,6 +93,10 @@
                    {
                        "title":  "3-9-22 - justin beat",
                        "src":  "Renders/FromProjects/RozKyler/2022/2022-03-09_beat_wip/3-9-22 - justin beat.mp3"
+                   },
+                   {
+                       "title":  "3-9-22 - justin beat",
+                       "src":  "Renders/FromProjects/RozKyler/2022/2022-03-09_beat_wip/3-9-22 - justin beat.wav"
                    },
                    {
                        "title":  "3-30-22",
@@ -231,6 +243,10 @@
                        "src":  "Renders/FromProjects/RozKyler/2022/Huntsville/PuzzleBuddyEP/2022_trap_wip_2/intro_2_trap_beat2.mp3"
                    },
                    {
+                       "title":  "colab tapes #1",
+                       "src":  "Renders/FromProjects/RozKyler/2022/Huntsville/PuzzleBuddyEP/Mixed/2022_beat_wip/colab tapes #1.wav"
+                   },
+                   {
                        "title":  "11-21-21 - 12-4-21 lofi-trap-beat",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/2021-11-21_trap_wip/11-21-21 - 12-4-21 lofi-trap-beat.mp3"
                    },
@@ -299,10 +315,6 @@
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/2022_beat_wip_17/motel#4.mp3"
                    },
                    {
-                       "title":  "parallelism (rap)",
-                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/2022_beat_wip_18/parallelism (rap).mp3"
-                   },
-                   {
                        "title":  "skimask beat",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/2022_beat_wip_21/skimask beat.mp3"
                    },
@@ -319,6 +331,10 @@
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/2022_beat_wip_8/kinda hard _2.mp3"
                    },
                    {
+                       "title":  "catastrophize",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip/catastrophize.wav"
+                   },
+                   {
                        "title":  "fade_release",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_10/fade_release.mp3"
                    },
@@ -332,27 +348,59 @@
                    },
                    {
                        "title":  "fade_release_5",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_14/fade_release_5.flac"
+                   },
+                   {
+                       "title":  "fade_release_5",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_14/fade_release_5.mp3"
+                   },
+                   {
+                       "title":  "fade_release_5",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_14/fade_release_5.wav"
                    },
                    {
                        "title":  "parallelism (final)",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_15/parallelism (final).mp3"
                    },
                    {
+                       "title":  "parallelism (final)",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_15/parallelism (final).wav"
+                   },
+                   {
+                       "title":  "parallelism (final)_2 _ final fr",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_16/parallelism (final)_2 _ final fr.flac"
+                   },
+                   {
                        "title":  "parallelism (final)_2 _ final fr",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_16/parallelism (final)_2 _ final fr.mp3"
                    },
                    {
-                       "title":  "parallelism (rap)_3 (current soundcloud release)_2",
-                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_18/parallelism (rap)_3 (current soundcloud release)_2.mp3"
+                       "title":  "parallelism (final)_2 _ final fr",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_16/parallelism (final)_2 _ final fr.wav"
                    },
                    {
-                       "title":  "passenger (vocals)",
-                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_21/passenger (vocals).mp3"
+                       "title":  "passenger",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_20/passenger.wav"
+                   },
+                   {
+                       "title":  "stuckintheclouds",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_25/stuckintheclouds.wav"
                    },
                    {
                        "title":  "stuckintheclouds_11",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_27/stuckintheclouds_11.mp3"
+                   },
+                   {
+                       "title":  "stuckintheclouds_11",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_27/stuckintheclouds_11.wav"
+                   },
+                   {
+                       "title":  "stuckintheclouds_2",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_28/stuckintheclouds_2.wav"
+                   },
+                   {
+                       "title":  "stuckintheclouds_3",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_29/stuckintheclouds_3.wav"
                    },
                    {
                        "title":  "catastrophize_3",
@@ -367,12 +415,32 @@
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_34/stuckintheclouds_8.mp3"
                    },
                    {
+                       "title":  "stuckintheclouds_8",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_34/stuckintheclouds_8.wav"
+                   },
+                   {
                        "title":  "catastrophize_4",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_4/catastrophize_4.mp3"
                    },
                    {
+                       "title":  "fade",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/2022_beat_wip_6/fade.wav"
+                   },
+                   {
+                       "title":  "fade_release_2",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip/fade_release_2.wav"
+                   },
+                   {
+                       "title":  "parallelism (final)_2",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip_10/parallelism (final)_2.wav"
+                   },
+                   {
                        "title":  "parallelism (final)_2_finished fr",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip_11/parallelism (final)_2_finished fr.mp3"
+                   },
+                   {
+                       "title":  "parallelism (final)_2_finished fr",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip_11/parallelism (final)_2_finished fr.wav"
                    },
                    {
                        "title":  "kinda hard _8",
@@ -387,16 +455,36 @@
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip_6/never enough time_ release_2.mp3"
                    },
                    {
+                       "title":  "never enough time_ release_2",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip_6/never enough time_ release_2.wav"
+                   },
+                   {
                        "title":  "never enough time_ release_3",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip_7/never enough time_ release_3.mp3"
+                   },
+                   {
+                       "title":  "never enough time_ release_3",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip_7/never enough time_ release_3.wav"
                    },
                    {
                        "title":  "never enough time_ release_3_fr done",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip_8/never enough time_ release_3_fr done.mp3"
                    },
                    {
+                       "title":  "never enough time_ release_3_fr done",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/2022_beat_wip_8/never enough time_ release_3_fr done.wav"
+                   },
+                   {
+                       "title":  "fade_release_5",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/Album/2022_beat_wip/fade_release_5.flac"
+                   },
+                   {
                        "title":  "fade_release_5",
                        "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/Album/2022_beat_wip/fade_release_5.mp3"
+                   },
+                   {
+                       "title":  "fade_release_5",
+                       "src":  "Renders/FromProjects/RozKyler/2022/i feel like this most of the time/Tracklist/Done/Actually Done/Album/2022_beat_wip/fade_release_5.wav"
                    },
                    {
                        "title":  "parallelism (final)_2",
@@ -409,6 +497,14 @@
                    {
                        "title":  "never enough time_ done",
                        "src":  "Renders/FromProjects/RozKyler/2022/Midnight Tapes/2022_beat_wip_7/never enough time_ done.mp3"
+                   },
+                   {
+                       "title":  "never enough time_ done",
+                       "src":  "Renders/FromProjects/RozKyler/2022/Midnight Tapes/2022_beat_wip_7/never enough time_ done.wav"
+                   },
+                   {
+                       "title":  "never enough time_ release_4",
+                       "src":  "Renders/FromProjects/RozKyler/2022/Midnight Tapes/2022_beat_wip_8/never enough time_ release_4.flac"
                    },
                    {
                        "title":  "never enough time_ release_4",
@@ -427,12 +523,84 @@
                        "src":  "Renders/FromProjects/RozKyler/2022/most improved/2023-07-04_beat_wip/7_4-23-22.mp3"
                    },
                    {
+                       "title":  "1_mars type beat_2",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/01_Intro (Mars Type Beat)/2022_type_beat_wip/1_mars type beat_2.wav"
+                   },
+                   {
+                       "title":  "3_4-16-22_2",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/02_Falling Up (4-16)/2016-03-04_beat_wip/3_4-16-22_2.wav"
+                   },
+                   {
+                       "title":  "3_4-16-22_3",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/02_Falling Up (4-16)/2016-03-04_beat_wip_2/3_4-16-22_3.wav"
+                   },
+                   {
+                       "title":  "9_faces type beat",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/03_inconsitent creator/2022_type_beat_wip/9_faces type beat.wav"
+                   },
+                   {
+                       "title":  "6_SKYLIGHT_3",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/04_castle repeat/05_SKYLIGHT/2022_beat_wip/6_SKYLIGHT_3.wav"
+                   },
+                   {
+                       "title":  "4_castlevania type beat",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/04_castle repeat/2022_type_beat_wip/4_castlevania type beat.wav"
+                   },
+                   {
                        "title":  "4_castlevania type beat_2",
                        "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/04_castle repeat/2022_type_beat_wip_2/4_castlevania type beat_2.mp3"
                    },
                    {
+                       "title":  "4_castlevania type beat_2",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/04_castle repeat/2022_type_beat_wip_2/4_castlevania type beat_2.wav"
+                   },
+                   {
+                       "title":  "6_SKYLIGHT_3",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/05_SKYLIGHT/2022_beat_wip/6_SKYLIGHT_3.wav"
+                   },
+                   {
+                       "title":  "5_toms_2",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/07_father/2022_beat_wip/5_toms_2.wav"
+                   },
+                   {
+                       "title":  "2_zelopperz type beat",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/08_GAS/2022_type_beat_wip/2_zelopperz type beat.wav"
+                   },
+                   {
+                       "title":  "7_4-23-22",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/09_im in the clouds/2023-07-04_beat_wip/7_4-23-22.wav"
+                   },
+                   {
+                       "title":  "8_3-30-22",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/10_T.T.B/2030-08-03_beat_wip/8_3-30-22.wav"
+                   },
+                   {
+                       "title":  "12_7-24-22_2",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/12_remember/2024-12-07_beat_wip/12_7-24-22_2.wav"
+                   },
+                   {
+                       "title":  "10_2-21-22 - trap_3",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/13_leaving home again/2021-10-02_trap_wip/10_2-21-22 - trap_3.wav"
+                   },
+                   {
+                       "title":  "10_2-21-22 - trap_4",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/13_leaving home again/2021-10-02_trap_wip_2/10_2-21-22 - trap_4.wav"
+                   },
+                   {
+                       "title":  "11_drake type_8_9_22",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/14_you\u0027re all i have/2022_beat_wip/11_drake type_8_9_22.wav"
+                   },
+                   {
+                       "title":  "11_drake type_8_9_23",
+                       "src":  "Renders/FromProjects/RozKyler/2022/most improved/mix_2/14_you\u0027re all i have/2022_beat_wip_2/11_drake type_8_9_23.wav"
+                   },
+                   {
                        "title":  "stuckintheclouds_10",
                        "src":  "Renders/FromProjects/RozKyler/2022/Stuck In The Clouds Single/2022_beat_wip/stuckintheclouds_10.mp3"
+                   },
+                   {
+                       "title":  "stuckintheclouds_10",
+                       "src":  "Renders/FromProjects/RozKyler/2022/Stuck In The Clouds Single/2022_beat_wip/stuckintheclouds_10.wav"
                    },
                    {
                        "title":  "truecrimespt2_2",
@@ -479,6 +647,10 @@
                        "src":  "Renders/FromProjects/RozKyler/2023/2023_EP/2023_beat_wip_2/2023_EP_new_tracklist.mp3"
                    },
                    {
+                       "title":  "2023_EP_new_tracklist",
+                       "src":  "Renders/FromProjects/RozKyler/2023/2023_EP/2023_beat_wip_2/2023_EP_new_tracklist.wav"
+                   },
+                   {
                        "title":  "21_savage_type_beat__10_2_23",
                        "src":  "Renders/FromProjects/RozKyler/2023/21_savage_type_beat__10_2_23/2023_beat_wip/21_savage_type_beat__10_2_23.mp3"
                    },
@@ -489,6 +661,10 @@
                    {
                        "title":  "4-27-23",
                        "src":  "Renders/FromProjects/RozKyler/2023/4-27-23/2023-04-27_beat_wip/4-27-23.mp3"
+                   },
+                   {
+                       "title":  "4-27-23",
+                       "src":  "Renders/FromProjects/RozKyler/2023/4-27-23/2023-04-27_beat_wip/4-27-23.wav"
                    },
                    {
                        "title":  "4-5-23",
@@ -563,6 +739,10 @@
                        "src":  "Renders/FromProjects/RozKyler/2023/MYOFB - Paul/2023_beat_wip/MYOFB - Paul.mp3"
                    },
                    {
+                       "title":  "MYOFB - Paul",
+                       "src":  "Renders/FromProjects/RozKyler/2023/MYOFB - Paul/2023_beat_wip/MYOFB - Paul.wav"
+                   },
+                   {
                        "title":  "natural lhigh",
                        "src":  "Renders/FromProjects/RozKyler/2023/natural lhigh/2023_beat_wip/natural lhigh.mp3"
                    },
@@ -617,6 +797,10 @@
                    {
                        "title":  "5-11-21",
                        "src":  "Renders/FromProjects/RozKyler/Unsorted/rap_album/2021-05-11_beat_wip/5-11-21.mp3"
+                   },
+                   {
+                       "title":  "funkyashell",
+                       "src":  "Renders/FromProjects/RozKyler/Unsorted/rap_album/samples/Unsorted_beat_wip_5/funkyashell.wav"
                    },
                    {
                        "title":  "funkyashell_2",

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const LOG = "[Renders Radio]";
+  const LOG = "[RozKyler Archives]";
 
   /**
    * @param {"log"|"info"|"warn"|"error"} level
@@ -15,6 +15,12 @@
       return;
     }
     (console[level] || console.log).call(console, line, detail);
+  }
+
+  /** Skip tagged vocal / rap versions (filename convention). */
+  function isExcludedRadioTitle(title) {
+    const n = String(title || "").toLowerCase();
+    return n.includes("vocals") || n.includes("(rap)");
   }
 
   /** Human-readable label for HTMLMediaElement.error.code (MEDIA_ERR_*). */
@@ -53,7 +59,7 @@
   const likeSecret = cfg.likeSecret || "";
   /** Per track (`src`): block another like for this long (persists across revisits). */
   const LIKE_PER_TRACK_COOLDOWN_MS = 10 * 60 * 1000;
-  const LIKE_STORAGE_KEY = "RendersRadio_trackLikeAt_v1";
+  const LIKE_STORAGE_KEY = "RozKylerArchives_trackLikeAt_v1";
   let likeCooldownUiTimer = 0;
   let likeRequestInFlight = false;
 
@@ -75,9 +81,22 @@
     historyList: document.getElementById("history-list"),
     historyEmpty: document.getElementById("history-empty"),
     nowTitleDetails: document.getElementById("now-title-details"),
+    btnShareHistory: document.getElementById("btn-share-history"),
+    shareHistorySheet: document.getElementById("share-history-sheet"),
+    shareHistoryBackdrop: document.getElementById("share-history-backdrop"),
+    shareHistoryNative: document.getElementById("share-history-native"),
+    shareHistoryCopy: document.getElementById("share-history-copy"),
+    shareHistoryDownload: document.getElementById("share-history-download"),
+    shareHistoryClose: document.getElementById("share-history-close"),
   };
 
   const HISTORY_CAP = 80;
+
+  const PLAY_HISTORY_SHARE_INTRO = "I listened to RozKyler radio:\n\n";
+  const PLAY_HISTORY_SHARE_FILENAME = "rozkylerradio-play-history.txt";
+
+  /** @type {Element | null} */
+  let shareSheetReturnFocus = null;
 
   /** Suffixes stripped from the end of titles to group “versions” (fade mix N, _2, v2, …). */
   const VERSION_TAIL_RES = [
@@ -728,15 +747,20 @@
         if (!Array.isArray(list) || !list.length) {
           throw new Error("Playlist is empty");
         }
-        tracks = list.map((t) => {
-          const src = typeof t === "string" ? t : t.src || t.url || t.file;
-          const title = (typeof t === "object" && t.title) || titleFromSrc(src);
-          const rel = src.replace(/^\//, "");
-          const fullSrc = /^https?:\/\//i.test(src)
-            ? src
-            : joinUrl(mediaPrefix, encodePathSegments(rel));
-          return { title, src: fullSrc };
-        });
+        tracks = list
+          .map((t) => {
+            const src = typeof t === "string" ? t : t.src || t.url || t.file;
+            const title = (typeof t === "object" && t.title) || titleFromSrc(src);
+            const rel = src.replace(/^\//, "");
+            const fullSrc = /^https?:\/\//i.test(src)
+              ? src
+              : joinUrl(mediaPrefix, encodePathSegments(rel));
+            return { title, src: fullSrc };
+          })
+          .filter((t) => !isExcludedRadioTitle(t.title));
+        if (!tracks.length) {
+          throw new Error("Playlist is empty");
+        }
         rebuildOrder();
         rebuildGroupIndex();
         consecutiveErrors = 0;

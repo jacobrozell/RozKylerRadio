@@ -68,6 +68,11 @@
         <button type="button" id="btn-play">Play</button>
         <button type="button" id="btn-next" aria-label="Next track">Next</button>
       </div>
+      <section class="track-picker-block" aria-labelledby="track-picker-heading">
+        <h2 id="track-picker-heading" class="history-heading">All tracks</h2>
+        <p class="track-picker-hint">Tap a title to play it (A–Z).</p>
+        <ul id="track-picker-list" class="variant-list track-picker-list"></ul>
+      </section>
       <label class="volume">
         <span>Vol</span>
         <input type="range" id="volume" min="0" max="1" step="0.02" value="0.9" />

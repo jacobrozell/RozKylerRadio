@@ -78,6 +78,7 @@
     btnLike: document.getElementById("btn-like"),
     volume: document.getElementById("volume"),
     variantList: document.getElementById("variant-list"),
+    trackPickerList: document.getElementById("track-picker-list"),
     historyList: document.getElementById("history-list"),
     historyEmpty: document.getElementById("history-empty"),
     nowTitleDetails: document.getElementById("now-title-details"),
@@ -379,6 +380,40 @@
         btn.addEventListener("click", () => {
           playTrackByIndex(ti);
           if (el.nowTitleDetails) el.nowTitleDetails.open = false;
+        });
+      }
+      li.appendChild(btn);
+      ul.appendChild(li);
+    }
+  }
+
+  function renderTrackPickerList() {
+    const ul = el.trackPickerList;
+    if (!ul) return;
+    ul.innerHTML = "";
+    if (!tracks.length) return;
+    const sortedIndices = tracks
+      .map((_, i) => i)
+      .sort((a, b) =>
+        tracks[a].title.localeCompare(tracks[b].title, undefined, {
+          sensitivity: "base",
+        })
+      );
+    const curIdx = order[orderIndex];
+    for (const ti of sortedIndices) {
+      const tr = tracks[ti];
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = tr.title;
+      if (ti === curIdx) {
+        btn.classList.add("is-current");
+        btn.disabled = true;
+        btn.setAttribute("aria-current", "true");
+        btn.setAttribute("aria-label", "Now playing: " + tr.title);
+      } else {
+        btn.addEventListener("click", () => {
+          playTrackByIndex(ti);
         });
       }
       li.appendChild(btn);
@@ -874,6 +909,7 @@
         updatePrevButtonState();
         updateTimeDisplay();
         renderVariantList();
+        renderTrackPickerList();
         renderHistory();
       });
   }
@@ -887,6 +923,7 @@
     el.now.textContent = t.title;
     el.hint.textContent = t.src;
     renderVariantList();
+    renderTrackPickerList();
     updatePrevButtonState();
     updateLikeButtonForCurrentTrack();
     if (el.timeDisplay) {

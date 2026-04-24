@@ -181,6 +181,23 @@ h1 {
   opacity: 1;
 }
 
+.track-picker-block {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.track-picker-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+  line-height: 1.35;
+}
+
+.track-picker-list {
+  max-height: min(42vh, 17rem);
+}
+
 .history-block {
   margin-top: 1.25rem;
   padding-top: 1rem;

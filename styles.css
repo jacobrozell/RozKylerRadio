@@ -32,9 +32,7 @@ body {
   border-radius: 1rem;
   padding: 1.75rem;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow:
-    0 0 var(--glow-spread) rgba(201, 162, 39, var(--glow-alpha)),
-    0 0 calc(var(--glow-spread) * 1.95) rgba(201, 162, 39, calc(var(--glow-alpha) * 0.44));
+  box-shadow: 0 0 var(--glow-spread) rgba(201, 162, 39, var(--glow-alpha));
 }
 
 h1 {

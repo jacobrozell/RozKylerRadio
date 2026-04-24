@@ -85,7 +85,8 @@
     /\s*[-–—]\s*(?:take|part)\s*\d+\s*$/i,
     /\s*[-–—]\s*v(?:ersion)?\s*\d+\s*$/i,
     /\s+v\d+\s*$/i,
-    /_\d+\s*$/i,
+    // Trailing _2 / _03 etc., but not …beat_2 (different beats in one session, e.g. rap_beat_2).
+    /(?<!beat)_\d+\s*$/i,
     /\s*\(\s*v\s*\d+\s*\)\s*$/i,
     /\s*\(\s*alt(?:ernate)?\s*\)\s*$/i,
     /\s*\(\s*demo\s*\)\s*$/i,
@@ -276,25 +277,17 @@
     playCurrent();
   }
 
-  const GLOW_HZ_BASS_LOW = 35;
-  const GLOW_HZ_BASS_HIGH = 320;
+  const GLOW_HZ_BASS_LOW = 40;
+  const GLOW_HZ_BASS_HIGH = 200;
   const GLOW_FFT_SIZE = 2048;
-  const GLOW_ANALYSER_SMOOTHING = 0.55;
-  const GLOW_SPREAD_MIN = 56;
-  const GLOW_SPREAD_MAX = 275;
-  const GLOW_ALPHA_MIN = 0.3;
-  const GLOW_ALPHA_MAX = 0.94;
-  const GLOW_SMOOTH_ATTACK = 0.55;
-  const GLOW_SMOOTH_RELEASE = 0.07;
-  const GLOW_BASS_GAIN = 1.25;
-  /** Slow EMA of raw level — lags behind so dense mixes still show transients. */
-  const GLOW_SLOW_FOLLOW = 0.011;
-  const GLOW_SLOW_OFFSET = 0.9;
-  const GLOW_MIX_RAW = 0.22;
-  const GLOW_MIX_TRANSIENT = 0.78;
-  const GLOW_TRANSIENT_BOOST = 5.8;
-  /** Below 1: stretches mids/highs so small changes read larger on the glow. */
-  const GLOW_DISPLAY_GAMMA = 0.78;
+  const GLOW_ANALYSER_SMOOTHING = 0.72;
+  const GLOW_SPREAD_MIN = 44;
+  const GLOW_SPREAD_MAX = 100;
+  const GLOW_ALPHA_MIN = 0.22;
+  const GLOW_ALPHA_MAX = 0.52;
+  const GLOW_SMOOTH_ATTACK = 0.38;
+  const GLOW_SMOOTH_RELEASE = 0.1;
+  const GLOW_BASS_GAIN = 1.35;
 
   // Same-origin media (default RADIO_CONFIG) works with createMediaElementSource.
   // Do not set audio.crossOrigin unless every track URL sends ACAO; otherwise the graph can fail.
@@ -310,7 +303,6 @@
   let glowInitFailed = false;
   let glowRafId = 0;
   let glowEnv = 0;
-  let glowSlowLevel = 0.08;
 
   /** @type {{ title: string, src: string }[]} */
   let tracks = [];
@@ -419,7 +411,6 @@
       glowRafId = 0;
     }
     glowEnv = 0;
-    glowSlowLevel = 0.08;
     resetGlowCss();
   }
 
@@ -433,16 +424,9 @@
     i0 = Math.max(0, Math.min(i0, glowFreqBuf.length - 1));
     i1 = Math.max(i0 + 1, Math.min(i1, glowFreqBuf.length));
     let sum = 0;
-    let peak = 0;
-    for (let i = i0; i < i1; i++) {
-      const b = glowFreqBuf[i];
-      sum += b;
-      if (b > peak) peak = b;
-    }
+    for (let i = i0; i < i1; i++) sum += glowFreqBuf[i];
     const avg = sum / (i1 - i0) / 255;
-    const max01 = peak / 255;
-    const blended = Math.max(avg * 1.2, max01 * 0.95);
-    const v = blended * GLOW_BASS_GAIN;
+    const v = avg * GLOW_BASS_GAIN;
     return v < 0 ? 0 : v > 1 ? 1 : v;
   }
 
@@ -453,21 +437,6 @@
     if (glowEnv < 0) glowEnv = 0;
     else if (glowEnv > 1) glowEnv = 1;
     return glowEnv;
-  }
-
-  /** Map bass energy through slow-follow + transient emphasis + gamma (dense-mix friendly). */
-  function glowShapeForDisplay(raw01) {
-    glowSlowLevel += (raw01 - glowSlowLevel) * GLOW_SLOW_FOLLOW;
-    const transient = Math.max(0, raw01 - glowSlowLevel * GLOW_SLOW_OFFSET);
-    const transientScaled = Math.min(
-      1,
-      transient * GLOW_TRANSIENT_BOOST
-    );
-    const mixed =
-      GLOW_MIX_RAW * raw01 + GLOW_MIX_TRANSIENT * transientScaled;
-    if (mixed <= 0) return 0;
-    if (mixed >= 1) return 1;
-    return Math.pow(mixed, GLOW_DISPLAY_GAMMA);
   }
 
   function glowApplyCss(energy01) {
@@ -488,8 +457,7 @@
     }
     if (document.visibilityState === "visible") {
       const raw = glowBassEnergy01();
-      const shaped = glowShapeForDisplay(raw);
-      const sm = glowSmoothToward(shaped);
+      const sm = glowSmoothToward(raw);
       glowApplyCss(sm);
     }
     glowRafId = requestAnimationFrame(tickGlow);

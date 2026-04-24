@@ -51,8 +51,11 @@
 
   const likeEndpoint = (cfg.likeEndpoint || "").trim();
   const likeSecret = cfg.likeSecret || "";
-  const likeCooldownMs = 2800;
-  let likeLastSent = 0;
+  /** Per track (`src`): block another like for this long (persists across revisits). */
+  const LIKE_PER_TRACK_COOLDOWN_MS = 10 * 60 * 1000;
+  const LIKE_STORAGE_KEY = "RendersRadio_trackLikeAt_v1";
+  let likeCooldownUiTimer = 0;
+  let likeRequestInFlight = false;
 
   const el = {
     player: document.getElementById("player"),
@@ -521,15 +524,132 @@
     }
   }
 
-  function configureLikeButton() {
-    if (!el.btnLike) return;
-    if (!likeEndpoint) {
+  function clearLikeCooldownUiTimer() {
+    if (likeCooldownUiTimer) {
+      clearTimeout(likeCooldownUiTimer);
+      likeCooldownUiTimer = 0;
+    }
+  }
+
+  /** @returns {Record<string, number>} */
+  function readLikeAtBySrc() {
+    try {
+      const raw = localStorage.getItem(LIKE_STORAGE_KEY);
+      if (!raw) return {};
+      const o = JSON.parse(raw);
+      return typeof o === "object" && o !== null && !Array.isArray(o) ? o : {};
+    } catch (_e) {
+      return {};
+    }
+  }
+
+  /** @param {Record<string, number>} map */
+  function writeLikeAtBySrc(map) {
+    try {
+      localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(map));
+    } catch (_e) {
+      /* quota or private mode */
+    }
+  }
+
+  /**
+   * @param {Record<string, number>} map
+   * @param {number} now
+   * @returns {boolean} whether map was mutated
+   */
+  function pruneExpiredLikeEntries(map, now) {
+    const cutoff = now - LIKE_PER_TRACK_COOLDOWN_MS;
+    let changed = false;
+    for (const k of Object.keys(map)) {
+      if (map[k] < cutoff) {
+        delete map[k];
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  /** @param {number} now */
+  function getLikeMapPruned(now) {
+    const map = readLikeAtBySrc();
+    if (pruneExpiredLikeEntries(map, now)) {
+      writeLikeAtBySrc(map);
+    }
+    return map;
+  }
+
+  /**
+   * @param {string} src
+   * @param {number} now
+   */
+  function remainingLikeCooldownMs(src, now) {
+    const map = getLikeMapPruned(now);
+    const at = map[src];
+    if (!at) return 0;
+    const left = LIKE_PER_TRACK_COOLDOWN_MS - (now - at);
+    return left > 0 ? left : 0;
+  }
+
+  /** @param {string} src */
+  function recordSuccessfulLikeForSrc(src) {
+    const now = Date.now();
+    const map = getLikeMapPruned(now);
+    map[src] = now;
+    writeLikeAtBySrc(map);
+  }
+
+  /** @param {number} ms */
+  function formatLikeCooldownRemaining(ms) {
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    if (m === 0) return r + "s";
+    if (r === 0) return m + "m";
+    return m + "m " + r + "s";
+  }
+
+  function updateLikeButtonForCurrentTrack() {
+    if (!el.btnLike || !likeEndpoint) return;
+    clearLikeCooldownUiTimer();
+    const t = currentTrack();
+    if (!t) {
       el.btnLike.disabled = true;
-      el.btnLike.title = "Like: set likeEndpoint in config.js (see like-worker-cloudflare.js)";
+      el.btnLike.title = "No track loaded";
+      return;
+    }
+    if (likeRequestInFlight) {
+      el.btnLike.disabled = true;
+      el.btnLike.title = "Sending like…";
+      return;
+    }
+    const now = Date.now();
+    const left = remainingLikeCooldownMs(t.src, now);
+    if (left > 0) {
+      el.btnLike.disabled = true;
+      el.btnLike.title =
+        "You liked this track recently. Like again in " +
+        formatLikeCooldownRemaining(left) +
+        ".";
+      const wait = Math.min(left + 80, 2147483647);
+      likeCooldownUiTimer = setTimeout(function refreshLikeUi() {
+        likeCooldownUiTimer = 0;
+        updateLikeButtonForCurrentTrack();
+      }, wait);
       return;
     }
     el.btnLike.disabled = false;
     el.btnLike.title = "Send anonymous like for this track";
+  }
+
+  function configureLikeButton() {
+    if (!el.btnLike) return;
+    if (!likeEndpoint) {
+      clearLikeCooldownUiTimer();
+      el.btnLike.disabled = true;
+      el.btnLike.title = "Like: set likeEndpoint in config.js (see like-worker-cloudflare.js)";
+      return;
+    }
+    updateLikeButtonForCurrentTrack();
   }
 
   function sendLike() {
@@ -537,11 +657,16 @@
     const t = currentTrack();
     if (!t) return;
     const now = Date.now();
-    if (now - likeLastSent < likeCooldownMs) {
-      setStatus("Wait a moment before another like.", false);
+    if (remainingLikeCooldownMs(t.src, now) > 0) {
+      setStatus("You already liked this track recently.", false);
+      updateLikeButtonForCurrentTrack();
       return;
     }
-    likeLastSent = now;
+    if (likeRequestInFlight) return;
+
+    likeRequestInFlight = true;
+    updateLikeButtonForCurrentTrack();
+
     const headers = { "Content-Type": "application/json" };
     if (likeSecret) headers["X-Like-Secret"] = likeSecret;
     const body = {
@@ -567,6 +692,7 @@
           );
           throw new Error("Like HTTP " + r.status);
         }
+        recordSuccessfulLikeForSrc(t.src);
         setStatus("Like sent (anonymous).", false);
       })
       .catch((err) => {
@@ -578,6 +704,10 @@
           );
         }
         setStatus("Could not send like (check endpoint / CORS).", true);
+      })
+      .finally(() => {
+        likeRequestInFlight = false;
+        updateLikeButtonForCurrentTrack();
       });
   }
 
@@ -641,6 +771,7 @@
     el.hint.textContent = t.src;
     renderVariantList();
     updatePrevButtonState();
+    updateLikeButtonForCurrentTrack();
     if (el.timeDisplay) {
       el.timeDisplay.textContent = "0:00 / --:--";
     }

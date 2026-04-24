@@ -114,6 +114,23 @@ button {
   background: rgba(255, 255, 255, 0.12);
 }
 
+#btn-like {
+  padding: 0.85rem 0.75rem;
+  min-width: 3.25rem;
+  background: rgba(201, 162, 39, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+}
+
+#btn-like:hover:not(:disabled) {
+  background: rgba(201, 162, 39, 0.2);
+}
+
+#btn-like:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 label.volume {
   display: flex;
   align-items: center;

@@ -17,6 +17,11 @@
       ? normalizeUrlPrefix(cfg.mediaBase)
       : basePath;
 
+  const likeEndpoint = (cfg.likeEndpoint || "").trim();
+  const likeSecret = cfg.likeSecret || "";
+  const likeCooldownMs = 2800;
+  let likeLastSent = 0;
+
   const el = {
     player: document.getElementById("player"),
     now: document.getElementById("now-playing"),
@@ -24,6 +29,7 @@
     status: document.getElementById("status"),
     btnPlay: document.getElementById("btn-play"),
     btnSkip: document.getElementById("btn-skip"),
+    btnLike: document.getElementById("btn-like"),
     volume: document.getElementById("volume"),
   };
 
@@ -83,6 +89,48 @@
     el.status.classList.toggle("error", !!isError);
   }
 
+  function configureLikeButton() {
+    if (!el.btnLike) return;
+    if (!likeEndpoint) {
+      el.btnLike.disabled = true;
+      el.btnLike.title = "Like: set likeEndpoint in config.js (see like-worker-cloudflare.js)";
+      return;
+    }
+    el.btnLike.disabled = false;
+    el.btnLike.title = "Send anonymous like for this track";
+  }
+
+  function sendLike() {
+    if (!likeEndpoint || !el.btnLike) return;
+    const t = currentTrack();
+    if (!t) return;
+    const now = Date.now();
+    if (now - likeLastSent < likeCooldownMs) {
+      setStatus("Wait a moment before another like.", false);
+      return;
+    }
+    likeLastSent = now;
+    const headers = { "Content-Type": "application/json" };
+    if (likeSecret) headers["X-Like-Secret"] = likeSecret;
+    const body = {
+      title: String(t.title).slice(0, 220),
+      src: String(t.src).slice(0, 400),
+    };
+    fetch(likeEndpoint, {
+      method: "POST",
+      mode: "cors",
+      headers: headers,
+      body: JSON.stringify(body),
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("Like HTTP " + r.status);
+        setStatus("Like sent (anonymous).", false);
+      })
+      .catch(() => {
+        setStatus("Could not send like (check endpoint / CORS).", true);
+      });
+  }
+
   function titleFromSrc(src) {
     const seg = src.split("/").filter(Boolean);
     const file = seg[seg.length - 1] || src;
@@ -114,6 +162,7 @@
         el.now.textContent = currentTrack().title;
         el.hint.textContent = currentTrack().src;
         setStatus(tracks.length + " tracks in rotation");
+        configureLikeButton();
       });
   }
 
@@ -172,6 +221,13 @@
   el.btnSkip.addEventListener("click", () => {
     advance();
   });
+
+  if (el.btnLike) {
+    el.btnLike.addEventListener("click", () => {
+      sendLike();
+    });
+  }
+  configureLikeButton();
 
   el.volume.addEventListener("input", () => {
     el.player.volume = Number(el.volume.value);

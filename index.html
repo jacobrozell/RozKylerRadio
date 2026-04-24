@@ -23,6 +23,9 @@
       <div class="controls">
         <button type="button" id="btn-play">Play</button>
         <button type="button" id="btn-skip">Skip</button>
+        <button type="button" id="btn-like" aria-label="Like current track" title="Anonymous like">
+          Like
+        </button>
       </div>
       <label class="volume">
         <span>Vol</span>
@@ -32,7 +35,9 @@
       <footer>
         Serve this repo root over HTTP (e.g. <code>npx serve</code> in the
         repo folder). See <code>Renders/_SHIPPING.txt</code> for how to publish
-        audio with GitHub Pages.
+        audio with GitHub Pages. Optional anonymous likes:
+        <code>likeEndpoint</code> in <code>config.js</code> plus
+        <code>like-worker-cloudflare.js</code>.
       </footer>
     </main>
     <audio id="player" preload="metadata"></audio>

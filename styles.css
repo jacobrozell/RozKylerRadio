@@ -4,7 +4,6 @@
   --text: #e8e6e3;
   --muted: #8a8680;
   --accent: #c9a227;
-  --glow: rgba(201, 162, 39, 0.35);
 }
 
 * {
@@ -24,14 +23,16 @@ body {
   padding: 1.5rem;
 }
 
-main {
+#radio-panel {
+  --glow-spread: 60px;
+  --glow-alpha: 0.35;
   width: 100%;
   max-width: 28rem;
   background: var(--panel);
   border-radius: 1rem;
   padding: 1.75rem;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 60px var(--glow);
+  box-shadow: 0 0 var(--glow-spread) rgba(201, 162, 39, var(--glow-alpha));
 }
 
 h1 {

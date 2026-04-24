@@ -24,6 +24,7 @@
 
   const el = {
     player: document.getElementById("player"),
+    panel: document.getElementById("radio-panel"),
     now: document.getElementById("now-playing"),
     hint: document.getElementById("path-hint"),
     status: document.getElementById("status"),
@@ -34,6 +35,33 @@
     btnLike: document.getElementById("btn-like"),
     volume: document.getElementById("volume"),
   };
+
+  const GLOW_HZ_BASS_LOW = 40;
+  const GLOW_HZ_BASS_HIGH = 200;
+  const GLOW_FFT_SIZE = 2048;
+  const GLOW_ANALYSER_SMOOTHING = 0.72;
+  const GLOW_SPREAD_MIN = 44;
+  const GLOW_SPREAD_MAX = 100;
+  const GLOW_ALPHA_MIN = 0.22;
+  const GLOW_ALPHA_MAX = 0.52;
+  const GLOW_SMOOTH_ATTACK = 0.38;
+  const GLOW_SMOOTH_RELEASE = 0.1;
+  const GLOW_BASS_GAIN = 1.35;
+
+  // Same-origin media (default RADIO_CONFIG) works with createMediaElementSource.
+  // Do not set audio.crossOrigin unless every track URL sends ACAO; otherwise the graph can fail.
+
+  /** @type {AudioContext|null} */
+  let glowAudioCtx = null;
+  /** @type {AnalyserNode|null} */
+  let glowAnalyser = null;
+  /** @type {Uint8Array|null} */
+  let glowFreqBuf = null;
+  let glowGraphCreated = false;
+  let glowGraphOk = false;
+  let glowInitFailed = false;
+  let glowRafId = 0;
+  let glowEnv = 0;
 
   /** @type {{ title: string, src: string }[]} */
   let tracks = [];
@@ -109,6 +137,124 @@
   function updatePrevButtonState() {
     if (!el.btnPrev) return;
     el.btnPrev.disabled = orderIndex <= 0;
+  }
+
+  function resetGlowCss() {
+    if (!el.panel) return;
+    el.panel.style.removeProperty("--glow-spread");
+    el.panel.style.removeProperty("--glow-alpha");
+  }
+
+  function stopGlowLoop() {
+    if (glowRafId) {
+      cancelAnimationFrame(glowRafId);
+      glowRafId = 0;
+    }
+    glowEnv = 0;
+    resetGlowCss();
+  }
+
+  function glowBassEnergy01() {
+    if (!glowGraphOk || !glowAnalyser || !glowFreqBuf || !glowAudioCtx) return 0;
+    glowAnalyser.getByteFrequencyData(glowFreqBuf);
+    const nyquist = glowAudioCtx.sampleRate / 2;
+    const hzPerBin = nyquist / glowFreqBuf.length;
+    let i0 = Math.floor(GLOW_HZ_BASS_LOW / hzPerBin);
+    let i1 = Math.ceil(GLOW_HZ_BASS_HIGH / hzPerBin);
+    i0 = Math.max(0, Math.min(i0, glowFreqBuf.length - 1));
+    i1 = Math.max(i0 + 1, Math.min(i1, glowFreqBuf.length));
+    let sum = 0;
+    for (let i = i0; i < i1; i++) sum += glowFreqBuf[i];
+    const avg = sum / (i1 - i0) / 255;
+    const v = avg * GLOW_BASS_GAIN;
+    return v < 0 ? 0 : v > 1 ? 1 : v;
+  }
+
+  function glowSmoothToward(raw) {
+    const coef =
+      raw > glowEnv ? GLOW_SMOOTH_ATTACK : GLOW_SMOOTH_RELEASE;
+    glowEnv += (raw - glowEnv) * coef;
+    if (glowEnv < 0) glowEnv = 0;
+    else if (glowEnv > 1) glowEnv = 1;
+    return glowEnv;
+  }
+
+  function glowApplyCss(energy01) {
+    if (!el.panel) return;
+    const spread =
+      GLOW_SPREAD_MIN + energy01 * (GLOW_SPREAD_MAX - GLOW_SPREAD_MIN);
+    const alpha =
+      GLOW_ALPHA_MIN + energy01 * (GLOW_ALPHA_MAX - GLOW_ALPHA_MIN);
+    el.panel.style.setProperty("--glow-spread", spread + "px");
+    el.panel.style.setProperty("--glow-alpha", String(alpha));
+  }
+
+  function tickGlow() {
+    glowRafId = 0;
+    if (!glowGraphOk || !glowAnalyser || el.player.paused) {
+      resetGlowCss();
+      return;
+    }
+    if (document.visibilityState === "visible") {
+      const raw = glowBassEnergy01();
+      const sm = glowSmoothToward(raw);
+      glowApplyCss(sm);
+    }
+    glowRafId = requestAnimationFrame(tickGlow);
+  }
+
+  function startGlowLoop() {
+    if (!glowGraphOk || el.player.paused) return;
+    if (glowRafId) cancelAnimationFrame(glowRafId);
+    glowRafId = requestAnimationFrame(tickGlow);
+  }
+
+  async function initGlowGraphOnFirstPlay() {
+    if (glowInitFailed) return;
+    if (glowGraphCreated) {
+      if (glowAudioCtx && glowAudioCtx.state === "suspended") {
+        try {
+          await glowAudioCtx.resume();
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      return;
+    }
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) {
+        glowInitFailed = true;
+        return;
+      }
+      glowAudioCtx = new Ctx();
+      const source = glowAudioCtx.createMediaElementSource(el.player);
+      glowAnalyser = glowAudioCtx.createAnalyser();
+      glowAnalyser.fftSize = GLOW_FFT_SIZE;
+      glowAnalyser.smoothingTimeConstant = GLOW_ANALYSER_SMOOTHING;
+      source.connect(glowAnalyser);
+      glowAnalyser.connect(glowAudioCtx.destination);
+      glowFreqBuf = new Uint8Array(glowAnalyser.frequencyBinCount);
+      glowGraphCreated = true;
+      glowGraphOk = true;
+      if (glowAudioCtx.state === "suspended") {
+        await glowAudioCtx.resume();
+      }
+    } catch (err) {
+      glowInitFailed = true;
+      glowGraphOk = false;
+      glowAnalyser = null;
+      glowFreqBuf = null;
+      if (glowAudioCtx) {
+        try {
+          glowAudioCtx.close();
+        } catch (e2) {
+          /* ignore */
+        }
+        glowAudioCtx = null;
+      }
+      console.warn("Renders Radio: Web Audio graph failed.", err);
+    }
   }
 
   function configureLikeButton() {
@@ -193,6 +339,7 @@
   function playCurrent() {
     const t = currentTrack();
     if (!t) return;
+    stopGlowLoop();
     el.player.src = t.src;
     el.now.textContent = t.title;
     el.hint.textContent = t.src;
@@ -200,19 +347,22 @@
     if (el.timeDisplay) {
       el.timeDisplay.textContent = "0:00 / --:--";
     }
-    el.player.play().then(
-      () => {
+    (async () => {
+      try {
+        await initGlowGraphOnFirstPlay();
+        await el.player.play();
         playing = true;
         consecutiveErrors = 0;
         el.btnPlay.textContent = "Pause";
         setStatus("");
-      },
-      () => {
+        startGlowLoop();
+      } catch (_err) {
         playing = false;
         el.btnPlay.textContent = "Play";
+        stopGlowLoop();
         setStatus("Playback blocked or failed — try clicking Play again.", true);
       }
-    );
+    })();
   }
 
   function advance() {
@@ -237,18 +387,24 @@
       el.player.pause();
       playing = false;
       el.btnPlay.textContent = "Play";
+      stopGlowLoop();
       return;
     }
     if (!el.player.src) {
       playCurrent();
     } else {
-      el.player
-        .play()
-        .then(() => {
+      (async () => {
+        try {
+          await initGlowGraphOnFirstPlay();
+          await el.player.play();
           playing = true;
           el.btnPlay.textContent = "Pause";
-        })
-        .catch(() => setStatus("Could not resume playback.", true));
+          startGlowLoop();
+        } catch (_err) {
+          stopGlowLoop();
+          setStatus("Could not resume playback.", true);
+        }
+      })();
     }
   });
 
@@ -277,6 +433,10 @@
 
   el.player.volume = Number(el.volume.value);
 
+  el.player.addEventListener("pause", () => {
+    stopGlowLoop();
+  });
+
   el.player.addEventListener("ended", () => {
     advance();
   });
@@ -285,6 +445,7 @@
     const err = el.player.error;
     const code = err ? err.code : 0;
     consecutiveErrors++;
+    stopGlowLoop();
     if (consecutiveErrors >= maxConsecutiveErrors) {
       playing = false;
       el.btnPlay.textContent = "Play";

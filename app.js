@@ -33,6 +33,8 @@
   let order = [];
   let orderIndex = 0;
   let playing = false;
+  let consecutiveErrors = 0;
+  const maxConsecutiveErrors = 3;
 
   function joinUrl(base, path) {
     if (!path) return base || "";
@@ -108,6 +110,7 @@
           return { title, src: fullSrc };
         });
         rebuildOrder();
+        consecutiveErrors = 0;
         el.now.textContent = currentTrack().title;
         el.hint.textContent = currentTrack().src;
         setStatus(tracks.length + " tracks in rotation");
@@ -123,6 +126,7 @@
     el.player.play().then(
       () => {
         playing = true;
+        consecutiveErrors = 0;
         el.btnPlay.textContent = "Pause";
         setStatus("");
       },
@@ -180,8 +184,27 @@
   });
 
   el.player.addEventListener("error", () => {
-    setStatus("Audio error — skipping.", true);
+    const err = el.player.error;
+    const code = err ? err.code : 0;
+    consecutiveErrors++;
+    if (consecutiveErrors >= maxConsecutiveErrors) {
+      playing = false;
+      el.btnPlay.textContent = "Play";
+      setStatus(
+        "Several tracks failed to load (wrong paths or missing files). " +
+          "If the site is under /YourRepo/, remove mediaBase: '/' from config.js " +
+          "or set mediaBase to '/YourRepo/'. Media error code: " +
+          code,
+        true
+      );
+      return;
+    }
+    setStatus("Track failed to load, skipping (" + consecutiveErrors + ").", true);
     advance();
+  });
+
+  el.player.addEventListener("loadeddata", () => {
+    consecutiveErrors = 0;
   });
 
   loadPlaylist().catch((e) => {

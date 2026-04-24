@@ -1,9 +1,10 @@
 /* eslint-disable */
-// Local preview (serve Music_Archives as HTTP root): mediaBase "/" loads /Renders/... from disk root.
-// GitHub Pages (https://jacobrozell.github.io/RozKylerRadio/): set both to "/RozKylerRadio/"
-// and put Renders/ + static files at repo root. Repo: https://github.com/jacobrozell/RozKylerRadio
+// Default: playlist + audio use paths relative to this HTML file (works on GitHub Pages
+// at https://USER.github.io/REPO/ and when you `npx serve` the repo root).
+//
+// Only set mediaBase if audio lives elsewhere on the same host, e.g. serve the app from
+// /Projects/.../radio/ but files at /Renders/... then: mediaBase: "/"
 window.RADIO_CONFIG = {
   basePath: "",
-  mediaBase: "/",
   playlistUrl: "playlist.json",
 };

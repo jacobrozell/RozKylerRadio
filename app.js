@@ -1,6 +1,38 @@
 (function () {
   "use strict";
 
+  const LOG = "[Renders Radio]";
+
+  /**
+   * @param {"log"|"info"|"warn"|"error"} level
+   * @param {string} message
+   * @param {unknown} [detail]
+   */
+  function radioLog(level, message, detail) {
+    const line = LOG + " " + message;
+    if (detail === undefined) {
+      (console[level] || console.log).call(console, line);
+      return;
+    }
+    (console[level] || console.log).call(console, line, detail);
+  }
+
+  /** Human-readable label for HTMLMediaElement.error.code (MEDIA_ERR_*). */
+  function describeMediaErrorCode(code) {
+    switch (code) {
+      case 1:
+        return "ABORTED (1) — load was aborted";
+      case 2:
+        return "NETWORK (2) — network error while fetching";
+      case 3:
+        return "DECODE (3) — decode failed or corrupt file";
+      case 4:
+        return "SRC_NOT_SUPPORTED (4) — format not supported or bad URL";
+      default:
+        return code ? "UNKNOWN (" + code + ")" : "no error object";
+    }
+  }
+
   const cfg = window.RADIO_CONFIG || {};
   const rawBase = cfg.basePath || "";
   const basePath = rawBase ? rawBase.replace(/\/?$/, "/") : "";
@@ -500,7 +532,11 @@
         }
         glowAudioCtx = null;
       }
-      console.warn("Renders Radio: Web Audio graph failed.", err);
+      radioLog(
+        "warn",
+        "Web Audio glow graph failed (playback may still work). Common causes: cross-origin media without CORS, or browser blocked AudioContext.",
+        err
+      );
     }
   }
 
@@ -538,10 +574,28 @@
       body: JSON.stringify(body),
     })
       .then((r) => {
-        if (!r.ok) throw new Error("Like HTTP " + r.status);
+        if (!r.ok) {
+          radioLog(
+            "error",
+            "Like request failed: HTTP " +
+              r.status +
+              " " +
+              r.statusText +
+              ". Check Worker URL, secret header, and CORS.",
+            { endpoint: likeEndpoint, title: body.title }
+          );
+          throw new Error("Like HTTP " + r.status);
+        }
         setStatus("Like sent (anonymous).", false);
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err && String(err.message || err).indexOf("Like HTTP") === -1) {
+          radioLog(
+            "error",
+            "Like request error (network, CORS blocked, or invalid URL):",
+            err
+          );
+        }
         setStatus("Could not send like (check endpoint / CORS).", true);
       });
   }
@@ -578,6 +632,15 @@
         el.now.textContent = currentTrack().title;
         el.hint.textContent = currentTrack().src;
         setStatus(tracks.length + " tracks in rotation");
+        radioLog(
+          "info",
+          "Playlist loaded: " +
+            tracks.length +
+            " tracks. playlistUrl=" +
+            playlistUrl +
+            " mediaPrefix=" +
+            (mediaPrefix || "(same as page)")
+        );
         configureLikeButton();
         updatePrevButtonState();
         updateTimeDisplay();
@@ -611,10 +674,15 @@
         el.btnPlay.textContent = "Pause";
         setStatus("");
         startGlowLoop();
-      } catch (_err) {
+      } catch (err) {
         playing = false;
         el.btnPlay.textContent = "Play";
         stopGlowLoop();
+        radioLog(
+          "error",
+          "play() failed (autoplay policy, missing src, or decode). Track:",
+          { title: t.title, src: t.src, error: err }
+        );
         setStatus("Playback blocked or failed — try clicking Play again.", true);
       }
     })();
@@ -655,8 +723,9 @@
           playing = true;
           el.btnPlay.textContent = "Pause";
           startGlowLoop();
-        } catch (_err) {
+        } catch (err) {
           stopGlowLoop();
+          radioLog("error", "resume play() failed:", err);
           setStatus("Could not resume playback.", true);
         }
       })();
@@ -699,6 +768,15 @@
   el.player.addEventListener("error", () => {
     const err = el.player.error;
     const code = err ? err.code : 0;
+    const t = currentTrack();
+    radioLog("error", "<audio> error: " + describeMediaErrorCode(code), {
+      mediaErrorCode: code,
+      src: el.player.src || "(empty)",
+      trackTitle: t ? t.title : "(none)",
+      consecutiveFailures: consecutiveErrors + 1,
+      hint:
+        "If paths 404 on GitHub Pages, check RADIO_CONFIG.basePath / mediaBase in config.js.",
+    });
     consecutiveErrors++;
     stopGlowLoop();
     if (consecutiveErrors >= maxConsecutiveErrors) {
@@ -727,6 +805,16 @@
 
   loadPlaylist().catch((e) => {
     el.now.textContent = "Could not load playlist";
-    setStatus(String(e.message || e), true);
+    const msg = String(e && e.message ? e.message : e);
+    radioLog(
+      "error",
+      "Failed to load playlist. URL: " +
+        playlistUrl +
+        " — " +
+        msg +
+        " (use a local static server, not file://; check basePath in config.js.)",
+      e
+    );
+    setStatus(msg, true);
   });
 })();

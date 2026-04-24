@@ -27,8 +27,10 @@
     now: document.getElementById("now-playing"),
     hint: document.getElementById("path-hint"),
     status: document.getElementById("status"),
+    timeDisplay: document.getElementById("time-display"),
     btnPlay: document.getElementById("btn-play"),
-    btnSkip: document.getElementById("btn-skip"),
+    btnPrev: document.getElementById("btn-prev"),
+    btnNext: document.getElementById("btn-next"),
     btnLike: document.getElementById("btn-like"),
     volume: document.getElementById("volume"),
   };
@@ -87,6 +89,26 @@
   function setStatus(msg, isError) {
     el.status.textContent = msg || "";
     el.status.classList.toggle("error", !!isError);
+  }
+
+  function formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "--:--";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ":" + String(s).padStart(2, "0");
+  }
+
+  function updateTimeDisplay() {
+    if (!el.timeDisplay) return;
+    const cur = el.player.currentTime;
+    const dur = el.player.duration;
+    el.timeDisplay.textContent =
+      formatTime(cur) + " / " + formatTime(dur);
+  }
+
+  function updatePrevButtonState() {
+    if (!el.btnPrev) return;
+    el.btnPrev.disabled = orderIndex <= 0;
   }
 
   function configureLikeButton() {
@@ -163,6 +185,8 @@
         el.hint.textContent = currentTrack().src;
         setStatus(tracks.length + " tracks in rotation");
         configureLikeButton();
+        updatePrevButtonState();
+        updateTimeDisplay();
       });
   }
 
@@ -172,6 +196,10 @@
     el.player.src = t.src;
     el.now.textContent = t.title;
     el.hint.textContent = t.src;
+    updatePrevButtonState();
+    if (el.timeDisplay) {
+      el.timeDisplay.textContent = "0:00 / --:--";
+    }
     el.player.play().then(
       () => {
         playing = true;
@@ -197,6 +225,12 @@
     playCurrent();
   }
 
+  function goPrev() {
+    if (!tracks.length || orderIndex <= 0) return;
+    orderIndex--;
+    playCurrent();
+  }
+
   el.btnPlay.addEventListener("click", () => {
     if (!tracks.length) return;
     if (playing) {
@@ -218,9 +252,17 @@
     }
   });
 
-  el.btnSkip.addEventListener("click", () => {
-    advance();
-  });
+  if (el.btnNext) {
+    el.btnNext.addEventListener("click", () => {
+      advance();
+    });
+  }
+
+  if (el.btnPrev) {
+    el.btnPrev.addEventListener("click", () => {
+      goPrev();
+    });
+  }
 
   if (el.btnLike) {
     el.btnLike.addEventListener("click", () => {
@@ -228,17 +270,6 @@
     });
   }
   configureLikeButton();
-
-  const btnBack = document.getElementById("btn-back");
-  if (btnBack) {
-    btnBack.addEventListener("click", () => {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else if (document.referrer) {
-        window.location.href = document.referrer;
-      }
-    });
-  }
 
   el.volume.addEventListener("input", () => {
     el.player.volume = Number(el.volume.value);
@@ -273,6 +304,10 @@
   el.player.addEventListener("loadeddata", () => {
     consecutiveErrors = 0;
   });
+
+  el.player.addEventListener("timeupdate", updateTimeDisplay);
+  el.player.addEventListener("loadedmetadata", updateTimeDisplay);
+  el.player.addEventListener("durationchange", updateTimeDisplay);
 
   loadPlaylist().catch((e) => {
     el.now.textContent = "Could not load playlist";

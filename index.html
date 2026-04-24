@@ -15,17 +15,16 @@
   </head>
   <body>
     <main>
-      <div class="top-bar">
-        <button type="button" id="btn-back" aria-label="Go back">Back</button>
-      </div>
       <h1>Live from the archive</h1>
       <p class="station-name">Renders Radio</p>
       <div class="now-label">Now playing</div>
       <div id="now-playing">Loading playlist…</div>
       <div id="path-hint"></div>
+      <div id="time-display" class="time-display" aria-live="polite">0:00 / --:--</div>
       <div class="controls">
+        <button type="button" id="btn-prev" aria-label="Previous track" disabled>Prev</button>
         <button type="button" id="btn-play">Play</button>
-        <button type="button" id="btn-skip">Skip</button>
+        <button type="button" id="btn-next" aria-label="Next track">Next</button>
         <button type="button" id="btn-like" aria-label="Like current track" title="Anonymous like">
           Like
         </button>

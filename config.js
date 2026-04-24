@@ -10,7 +10,7 @@ window.RADIO_CONFIG = {
 
   // After `wrangler deploy`: likeEndpoint: "https://rozkyler-radio-like.YOUR_SUBDOMAIN.workers.dev"
   // Steps: like-discord-setup.txt
-  likeEndpoint: "",
+  likeEndpoint: "https://rozkyler-radio-like.jacob-rozell83.workers.dev",
   // If your worker checks X-Like-Secret (weak anti-spam; visible in page source):
-  likeSecret: "",
+  likeSecret: "00001126",
 };

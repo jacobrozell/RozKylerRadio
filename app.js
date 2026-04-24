@@ -194,10 +194,103 @@
     renderHistory();
   }
 
+  function getPlayHistoryShareText() {
+    if (!playHistory.length) return PLAY_HISTORY_SHARE_INTRO.trimEnd();
+    const lines = [];
+    for (let i = playHistory.length - 1; i >= 0; i--) {
+      const e = playHistory[i];
+      const when = formatHistoryWhen(e.at);
+      lines.push(when ? "- " + e.title + " (" + when + ")" : "- " + e.title);
+    }
+    return PLAY_HISTORY_SHARE_INTRO + lines.join("\n") + "\n";
+  }
+
+  function openShareHistorySheet() {
+    if (!el.shareHistorySheet || !playHistory.length) return;
+    shareSheetReturnFocus = document.activeElement;
+    el.shareHistorySheet.hidden = false;
+    requestAnimationFrame(() => {
+      if (el.shareHistoryNative) el.shareHistoryNative.focus();
+    });
+  }
+
+  function closeShareHistorySheet() {
+    if (!el.shareHistorySheet) return;
+    el.shareHistorySheet.hidden = true;
+    if (
+      shareSheetReturnFocus &&
+      typeof shareSheetReturnFocus.focus === "function"
+    ) {
+      try {
+        shareSheetReturnFocus.focus();
+      } catch (_e) {
+        /* ignore */
+      }
+    }
+    shareSheetReturnFocus = null;
+  }
+
+  async function sharePlayHistoryNative() {
+    const text = getPlayHistoryShareText();
+    const title = "RozKyler radio — play history";
+    try {
+      const file = new File([text], PLAY_HISTORY_SHARE_FILENAME, {
+        type: "text/plain",
+      });
+      if (navigator.share) {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: title, text: text, files: [file] });
+          closeShareHistorySheet();
+          return;
+        }
+        await navigator.share({ title: title, text: text });
+        closeShareHistorySheet();
+        return;
+      }
+    } catch (err) {
+      if (err && /** @type {{ name?: string }} */ (err).name === "AbortError") {
+        return;
+      }
+      radioLog("warn", "navigator.share failed:", err);
+    }
+    setStatus("Sharing is not available here — try Copy or Download.", true);
+  }
+
+  async function copyPlayHistoryText() {
+    const text = getPlayHistoryShareText();
+    try {
+      await navigator.clipboard.writeText(text);
+      setStatus("Play history copied to clipboard.", false);
+      closeShareHistorySheet();
+    } catch (err) {
+      radioLog("warn", "clipboard.writeText failed:", err);
+      setStatus("Could not copy — use Download.", true);
+    }
+  }
+
+  function downloadPlayHistoryTxt() {
+    const text = getPlayHistoryShareText();
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = PLAY_HISTORY_SHARE_FILENAME;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setStatus("Download started.", false);
+    closeShareHistorySheet();
+  }
+
   function renderHistory() {
     const listEl = el.historyList;
     const emptyEl = el.historyEmpty;
     if (!listEl || !emptyEl) return;
+    if (el.btnShareHistory) {
+      el.btnShareHistory.disabled = playHistory.length === 0;
+    }
     if (!playHistory.length) {
       listEl.hidden = true;
       emptyEl.hidden = false;
@@ -887,6 +980,42 @@
     });
   }
   configureLikeButton();
+
+  if (el.btnShareHistory) {
+    el.btnShareHistory.addEventListener("click", () => {
+      openShareHistorySheet();
+    });
+  }
+  if (el.shareHistoryBackdrop) {
+    el.shareHistoryBackdrop.addEventListener("click", () => {
+      closeShareHistorySheet();
+    });
+  }
+  if (el.shareHistoryClose) {
+    el.shareHistoryClose.addEventListener("click", () => {
+      closeShareHistorySheet();
+    });
+  }
+  if (el.shareHistoryNative) {
+    el.shareHistoryNative.addEventListener("click", () => {
+      void sharePlayHistoryNative();
+    });
+  }
+  if (el.shareHistoryCopy) {
+    el.shareHistoryCopy.addEventListener("click", () => {
+      void copyPlayHistoryText();
+    });
+  }
+  if (el.shareHistoryDownload) {
+    el.shareHistoryDownload.addEventListener("click", () => {
+      downloadPlayHistoryTxt();
+    });
+  }
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Escape") return;
+    if (!el.shareHistorySheet || el.shareHistorySheet.hidden) return;
+    closeShareHistorySheet();
+  });
 
   el.volume.addEventListener("input", () => {
     el.player.volume = Number(el.volume.value);

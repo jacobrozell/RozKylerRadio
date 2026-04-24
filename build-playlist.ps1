@@ -71,6 +71,7 @@ $useWideScan =
 function Test-ExcludedRadioTitle {
   param([string] $TitleWithoutExt)
   $n = $TitleWithoutExt.ToLowerInvariant()
+  if ($n -eq "skylight_2") { return $true }
   if ($n.Contains("vocals")) { return $true }
   if ($n.Contains("(rap)")) { return $true }
   return $false

@@ -20,7 +20,7 @@
   /** Skip tagged vocal / rap versions (filename convention). */
   function isExcludedRadioTitle(title) {
     const n = String(title || "").toLowerCase();
-    return n.includes("vocals") || n.includes("(rap)");
+    return n === "skylight_2" || n.includes("vocals") || n.includes("(rap)");
   }
 
   /** Human-readable label for HTMLMediaElement.error.code (MEDIA_ERR_*). */

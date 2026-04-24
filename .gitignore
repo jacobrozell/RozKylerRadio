@@ -2,6 +2,11 @@
 Thumbs.db
 *.tmp
 
-# Optional: keep the pool out of git (use Releases / external hosting + playlist URLs).
-# Remove the next line if you commit Renders/ to this repo (watch GitHub file size limits).
-/Renders/
+# Renders pool: keep binaries out of git by default (size + GitHub limits).
+# See Renders/_SHIPPING.txt. To commit audio, remove these lines or switch to Git LFS.
+/Renders/**/*.mp3
+/Renders/**/*.wav
+/Renders/**/*.flac
+/Renders/**/*.m4a
+/Renders/**/*.ogg
+/Renders/**/_robocopy_log.txt

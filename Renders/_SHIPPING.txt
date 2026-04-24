@@ -1,0 +1,11 @@
+This folder holds the render pool for RozKyler Radio (copied from your Music_Archives Renders mirror).
+
+Audio files (*.mp3, *.wav, etc.) are gitignored so normal git push stays small.
+
+Ways to ship audio for GitHub Pages:
+  1) Git LFS — track these extensions in .gitattributes; still respect GitHub bandwidth and storage limits.
+  2) Host files elsewhere — put HTTPS URLs in playlist.json (edit or regenerate). Player already supports absolute http(s) src.
+  3) GitHub Release — attach a zip of Renders; not ideal for hundreds of individual track URLs unless you script URL generation.
+  4) Remove the audio lines from .gitignore here and commit the pool only if the repo stays under GitHub size limits (often impractical for full WAV masters).
+
+For github.io with everything in one repo, LFS or external static hosting (S3, Cloudflare R2, Backblaze, etc.) is the usual approach.

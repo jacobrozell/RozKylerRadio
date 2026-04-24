@@ -1,6 +1,8 @@
 .DS_Store
 Thumbs.db
 *.tmp
+.dev.vars
+.wrangler/
 
 # GitHub: plain Git blocks files >100 MB; Pages published site max 1 GB.
 # Ship lossy MP3 in git; keep huge lossless out (still on disk locally).

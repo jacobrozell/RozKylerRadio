@@ -8,8 +8,8 @@ window.RADIO_CONFIG = {
   basePath: "",
   playlistUrl: "playlist.json",
 
-  // Optional: HTTPS endpoint that accepts POST JSON { title, src } (anonymous).
-  // Pair with like-worker-cloudflare.js + Discord webhook, or your own relay.
+  // After `wrangler deploy`: likeEndpoint: "https://rozkyler-radio-like.YOUR_SUBDOMAIN.workers.dev"
+  // Steps: like-discord-setup.txt
   likeEndpoint: "",
   // If your worker checks X-Like-Secret (weak anti-spam; visible in page source):
   likeSecret: "",

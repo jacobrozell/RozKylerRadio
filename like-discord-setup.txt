@@ -1,0 +1,24 @@
+Discord likes for RozKyler Radio (anonymous)
+
+1) Discord webhook
+   - Server -> channel where you want pings -> gear (Edit Channel) -> Integrations -> Webhooks -> New Webhook.
+   - Copy the Webhook URL. Do not paste it into config.js or git (it is a password).
+
+2) Cloudflare Worker (free tier is enough)
+   - Install: npm i -g wrangler   then: wrangler login
+   - In this folder (radio): wrangler deploy
+   - Bind secrets (values never stored in repo):
+       wrangler secret put DISCORD_WEBHOOK     (paste Discord URL)
+       wrangler secret put LIKE_SECRET        (optional random string; same value goes in config.js likeSecret)
+       wrangler secret put ALLOWED_ORIGIN     (optional: https://jacobrozell.github.io so only your Pages site can call the worker; use * to allow any origin while testing)
+
+3) Site config (config.js in this repo, public)
+   - likeEndpoint: "https://<your-worker>.<subdomain>.workers.dev"   (URL wrangler prints after deploy)
+   - likeSecret: "<same as LIKE_SECRET>"   if you set LIKE_SECRET; else leave ""
+
+4) Test
+   - Open the live radio page, Play a track, click Like. You should see a message in Discord: Someone liked: **track name**
+
+Notes
+   - If Like fails in the browser, open DevTools -> Network: check CORS and HTTP status. Fix ALLOWED_ORIGIN to match the browser origin (GitHub Pages is https://jacobrozell.github.io with no path in the Origin header).
+   - Discord may rate-limit if many likes arrive at once; rare for a personal station.

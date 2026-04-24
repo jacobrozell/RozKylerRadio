@@ -29,24 +29,239 @@
     hint: document.getElementById("path-hint"),
     status: document.getElementById("status"),
     timeDisplay: document.getElementById("time-display"),
+    timeBlock: document.getElementById("time-block"),
     btnPlay: document.getElementById("btn-play"),
     btnPrev: document.getElementById("btn-prev"),
     btnNext: document.getElementById("btn-next"),
     btnLike: document.getElementById("btn-like"),
     volume: document.getElementById("volume"),
+    variantList: document.getElementById("variant-list"),
+    historyList: document.getElementById("history-list"),
+    historyEmpty: document.getElementById("history-empty"),
+    nowTitleDetails: document.getElementById("now-title-details"),
   };
 
-  const GLOW_HZ_BASS_LOW = 40;
-  const GLOW_HZ_BASS_HIGH = 200;
+  const HISTORY_CAP = 80;
+
+  /** Suffixes stripped from the end of titles to group “versions” (fade mix N, _2, v2, …). */
+  const VERSION_TAIL_RES = [
+    /\s*[-–—]\s*fade\s+mix\s*\d+\s*$/i,
+    /\s+fade\s+mix\s*\d+\s*$/i,
+    /\s*[-–—]\s*mix\s*\d+\s*$/i,
+    /\s*\(\s*mix\s*\d+\s*\)\s*$/i,
+    /\s*[-–—]\s*(?:take|part)\s*\d+\s*$/i,
+    /\s*[-–—]\s*v(?:ersion)?\s*\d+\s*$/i,
+    /\s+v\d+\s*$/i,
+    /_\d+\s*$/i,
+    /\s*\(\s*v\s*\d+\s*\)\s*$/i,
+    /\s*\(\s*alt(?:ernate)?\s*\)\s*$/i,
+    /\s*\(\s*demo\s*\)\s*$/i,
+  ];
+
+  /**
+   * @param {string} raw
+   * @returns {string}
+   */
+  function stripVersionSuffixes(raw) {
+    let s = String(raw).trim().replace(/\s+/g, " ");
+    if (!s) return s;
+    for (let pass = 0; pass < 20; pass++) {
+      let changed = false;
+      for (const re of VERSION_TAIL_RES) {
+        const next = s.replace(re, "").trim();
+        if (next !== s) {
+          s = next;
+          changed = true;
+        }
+      }
+      if (!changed) break;
+    }
+    return s || String(raw).trim();
+  }
+
+  /**
+   * @param {string} title
+   * @returns {string}
+   */
+  function trackGroupKey(title) {
+    return stripVersionSuffixes(title).toLowerCase();
+  }
+
+  /** @type {Map<string, number[]>} */
+  let groupToIndices = new Map();
+
+  function rebuildGroupIndex() {
+    groupToIndices = new Map();
+    for (let i = 0; i < tracks.length; i++) {
+      const k = trackGroupKey(tracks[i].title);
+      if (!groupToIndices.has(k)) groupToIndices.set(k, []);
+      groupToIndices.get(k).push(i);
+    }
+    for (const arr of groupToIndices.values()) {
+      arr.sort((a, b) =>
+        tracks[a].title.localeCompare(tracks[b].title, undefined, {
+          sensitivity: "base",
+        })
+      );
+    }
+  }
+
+  /** @type {{ trackIndex: number, title: string, src: string, at: number }[]} */
+  let playHistory = [];
+
+  function formatHistoryWhen(ts) {
+    try {
+      return new Date(ts).toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    } catch (_e) {
+      return "";
+    }
+  }
+
+  function recordPlayHistory() {
+    const idx = order[orderIndex];
+    const t = tracks[idx];
+    if (!t) return;
+    const last = playHistory[0];
+    if (last && last.trackIndex === idx) return;
+    playHistory.unshift({
+      trackIndex: idx,
+      title: t.title,
+      src: t.src,
+      at: Date.now(),
+    });
+    while (playHistory.length > HISTORY_CAP) playHistory.pop();
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const listEl = el.historyList;
+    const emptyEl = el.historyEmpty;
+    if (!listEl || !emptyEl) return;
+    if (!playHistory.length) {
+      listEl.hidden = true;
+      emptyEl.hidden = false;
+      listEl.innerHTML = "";
+      return;
+    }
+    emptyEl.hidden = true;
+    listEl.hidden = false;
+    /** @type {Map<string, { label: string, plays: typeof playHistory }>} */
+    const groups = new Map();
+    for (const e of playHistory) {
+      const k = trackGroupKey(e.title);
+      if (!groups.has(k)) {
+        groups.set(k, {
+          label: stripVersionSuffixes(e.title) || e.title,
+          plays: [],
+        });
+      }
+      groups.get(k).plays.push(e);
+    }
+    const ordered = [...groups.values()].sort((a, b) => {
+      const ma = Math.max(...a.plays.map((p) => p.at));
+      const mb = Math.max(...b.plays.map((p) => p.at));
+      return mb - ma;
+    });
+    listEl.innerHTML = "";
+    for (const g of ordered) {
+      const det = document.createElement("details");
+      det.className = "history-group";
+      const sum = document.createElement("summary");
+      sum.className = "history-group-summary";
+      const titleSpan = document.createElement("span");
+      titleSpan.className = "history-group-title";
+      titleSpan.textContent = g.label;
+      const meta = document.createElement("span");
+      meta.className = "history-group-meta";
+      meta.textContent =
+        g.plays.length === 1 ? "1 play" : g.plays.length + " plays";
+      sum.appendChild(titleSpan);
+      sum.appendChild(meta);
+      const body = document.createElement("div");
+      body.className = "history-group-body";
+      const ol = document.createElement("ul");
+      ol.className = "history-group-plays";
+      for (const p of g.plays) {
+        const li = document.createElement("li");
+        const t1 = document.createElement("span");
+        t1.className = "history-play-title";
+        t1.textContent = p.title;
+        const t2 = document.createElement("span");
+        t2.className = "history-play-when";
+        t2.textContent = formatHistoryWhen(p.at);
+        li.appendChild(t1);
+        li.appendChild(t2);
+        ol.appendChild(li);
+      }
+      body.appendChild(ol);
+      det.appendChild(sum);
+      det.appendChild(body);
+      listEl.appendChild(det);
+    }
+  }
+
+  function renderVariantList() {
+    const ul = el.variantList;
+    if (!ul) return;
+    ul.innerHTML = "";
+    const t = currentTrack();
+    if (!t || !tracks.length) return;
+    const key = trackGroupKey(t.title);
+    const indices = groupToIndices.get(key);
+    if (!indices || !indices.length) return;
+    const curIdx = order[orderIndex];
+    for (const ti of indices) {
+      const tr = tracks[ti];
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = tr.title;
+      if (ti === curIdx) {
+        btn.classList.add("is-current");
+        btn.disabled = true;
+        btn.setAttribute("aria-current", "true");
+        btn.setAttribute("aria-label", "Now playing: " + tr.title);
+      } else {
+        btn.addEventListener("click", () => {
+          playTrackByIndex(ti);
+          if (el.nowTitleDetails) el.nowTitleDetails.open = false;
+        });
+      }
+      li.appendChild(btn);
+      ul.appendChild(li);
+    }
+  }
+
+  function playTrackByIndex(trackIndex) {
+    if (trackIndex < 0 || trackIndex >= tracks.length) return;
+    order[orderIndex] = trackIndex;
+    playCurrent();
+  }
+
+  const GLOW_HZ_BASS_LOW = 35;
+  const GLOW_HZ_BASS_HIGH = 320;
   const GLOW_FFT_SIZE = 2048;
-  const GLOW_ANALYSER_SMOOTHING = 0.72;
-  const GLOW_SPREAD_MIN = 44;
-  const GLOW_SPREAD_MAX = 100;
-  const GLOW_ALPHA_MIN = 0.22;
-  const GLOW_ALPHA_MAX = 0.52;
-  const GLOW_SMOOTH_ATTACK = 0.38;
-  const GLOW_SMOOTH_RELEASE = 0.1;
-  const GLOW_BASS_GAIN = 1.35;
+  const GLOW_ANALYSER_SMOOTHING = 0.55;
+  const GLOW_SPREAD_MIN = 56;
+  const GLOW_SPREAD_MAX = 275;
+  const GLOW_ALPHA_MIN = 0.3;
+  const GLOW_ALPHA_MAX = 0.94;
+  const GLOW_SMOOTH_ATTACK = 0.55;
+  const GLOW_SMOOTH_RELEASE = 0.07;
+  const GLOW_BASS_GAIN = 1.25;
+  /** Slow EMA of raw level — lags behind so dense mixes still show transients. */
+  const GLOW_SLOW_FOLLOW = 0.011;
+  const GLOW_SLOW_OFFSET = 0.9;
+  const GLOW_MIX_RAW = 0.22;
+  const GLOW_MIX_TRANSIENT = 0.78;
+  const GLOW_TRANSIENT_BOOST = 5.8;
+  /** Below 1: stretches mids/highs so small changes read larger on the glow. */
+  const GLOW_DISPLAY_GAMMA = 0.78;
 
   // Same-origin media (default RADIO_CONFIG) works with createMediaElementSource.
   // Do not set audio.crossOrigin unless every track URL sends ACAO; otherwise the graph can fail.
@@ -62,6 +277,7 @@
   let glowInitFailed = false;
   let glowRafId = 0;
   let glowEnv = 0;
+  let glowSlowLevel = 0.08;
 
   /** @type {{ title: string, src: string }[]} */
   let tracks = [];
@@ -132,6 +348,13 @@
     const dur = el.player.duration;
     el.timeDisplay.textContent =
       formatTime(cur) + " / " + formatTime(dur);
+    if (el.timeBlock) {
+      const p =
+        Number.isFinite(dur) && dur > 0
+          ? Math.min(1, Math.max(0, cur / dur))
+          : 0;
+      el.timeBlock.style.setProperty("--progress", String(p));
+    }
   }
 
   function updatePrevButtonState() {
@@ -151,6 +374,7 @@
       glowRafId = 0;
     }
     glowEnv = 0;
+    glowSlowLevel = 0.08;
     resetGlowCss();
   }
 
@@ -164,9 +388,16 @@
     i0 = Math.max(0, Math.min(i0, glowFreqBuf.length - 1));
     i1 = Math.max(i0 + 1, Math.min(i1, glowFreqBuf.length));
     let sum = 0;
-    for (let i = i0; i < i1; i++) sum += glowFreqBuf[i];
+    let peak = 0;
+    for (let i = i0; i < i1; i++) {
+      const b = glowFreqBuf[i];
+      sum += b;
+      if (b > peak) peak = b;
+    }
     const avg = sum / (i1 - i0) / 255;
-    const v = avg * GLOW_BASS_GAIN;
+    const max01 = peak / 255;
+    const blended = Math.max(avg * 1.2, max01 * 0.95);
+    const v = blended * GLOW_BASS_GAIN;
     return v < 0 ? 0 : v > 1 ? 1 : v;
   }
 
@@ -177,6 +408,21 @@
     if (glowEnv < 0) glowEnv = 0;
     else if (glowEnv > 1) glowEnv = 1;
     return glowEnv;
+  }
+
+  /** Map bass energy through slow-follow + transient emphasis + gamma (dense-mix friendly). */
+  function glowShapeForDisplay(raw01) {
+    glowSlowLevel += (raw01 - glowSlowLevel) * GLOW_SLOW_FOLLOW;
+    const transient = Math.max(0, raw01 - glowSlowLevel * GLOW_SLOW_OFFSET);
+    const transientScaled = Math.min(
+      1,
+      transient * GLOW_TRANSIENT_BOOST
+    );
+    const mixed =
+      GLOW_MIX_RAW * raw01 + GLOW_MIX_TRANSIENT * transientScaled;
+    if (mixed <= 0) return 0;
+    if (mixed >= 1) return 1;
+    return Math.pow(mixed, GLOW_DISPLAY_GAMMA);
   }
 
   function glowApplyCss(energy01) {
@@ -197,7 +443,8 @@
     }
     if (document.visibilityState === "visible") {
       const raw = glowBassEnergy01();
-      const sm = glowSmoothToward(raw);
+      const shaped = glowShapeForDisplay(raw);
+      const sm = glowSmoothToward(shaped);
       glowApplyCss(sm);
     }
     glowRafId = requestAnimationFrame(tickGlow);
@@ -326,6 +573,7 @@
           return { title, src: fullSrc };
         });
         rebuildOrder();
+        rebuildGroupIndex();
         consecutiveErrors = 0;
         el.now.textContent = currentTrack().title;
         el.hint.textContent = currentTrack().src;
@@ -333,19 +581,26 @@
         configureLikeButton();
         updatePrevButtonState();
         updateTimeDisplay();
+        renderVariantList();
+        renderHistory();
       });
   }
 
   function playCurrent() {
     const t = currentTrack();
     if (!t) return;
+    recordPlayHistory();
     stopGlowLoop();
     el.player.src = t.src;
     el.now.textContent = t.title;
     el.hint.textContent = t.src;
+    renderVariantList();
     updatePrevButtonState();
     if (el.timeDisplay) {
       el.timeDisplay.textContent = "0:00 / --:--";
+    }
+    if (el.timeBlock) {
+      el.timeBlock.style.setProperty("--progress", "0");
     }
     (async () => {
       try {

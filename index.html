@@ -15,6 +15,9 @@
   </head>
   <body>
     <main>
+      <div class="top-bar">
+        <button type="button" id="btn-back" aria-label="Go back">Back</button>
+      </div>
       <h1>Live from the archive</h1>
       <p class="station-name">Renders Radio</p>
       <div class="now-label">Now playing</div>
@@ -35,7 +38,8 @@
       <footer>
         Serve this repo root over HTTP (e.g. <code>npx serve</code> in the
         repo folder). See <code>Renders/_SHIPPING.txt</code> for how to publish
-        audio with GitHub Pages.         Optional anonymous likes: see <code>like-discord-setup.txt</code>.
+        audio with GitHub Pages. Optional anonymous likes: see
+        <code>like-discord-setup.txt</code>.
       </footer>
     </main>
     <audio id="player" preload="metadata"></audio>

@@ -229,6 +229,17 @@
   }
   configureLikeButton();
 
+  const btnBack = document.getElementById("btn-back");
+  if (btnBack) {
+    btnBack.addEventListener("click", () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else if (document.referrer) {
+        window.location.href = document.referrer;
+      }
+    });
+  }
+
   el.volume.addEventListener("input", () => {
     el.player.volume = Number(el.volume.value);
   });

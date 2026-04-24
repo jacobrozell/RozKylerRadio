@@ -60,6 +60,7 @@
     now: document.getElementById("now-playing"),
     hint: document.getElementById("path-hint"),
     status: document.getElementById("status"),
+    trackCount: document.getElementById("track-count"),
     timeDisplay: document.getElementById("time-display"),
     timeBlock: document.getElementById("time-block"),
     btnPlay: document.getElementById("btn-play"),
@@ -367,6 +368,18 @@
     el.status.classList.toggle("error", !!isError);
   }
 
+  function updateTrackCountDisplay() {
+    const node = el.trackCount;
+    if (!node) return;
+    const n = tracks.length;
+    if (!n) {
+      node.textContent = "";
+      return;
+    }
+    node.textContent =
+      n === 1 ? "1 track in rotation" : n + " tracks in rotation";
+  }
+
   function formatTime(seconds) {
     if (!Number.isFinite(seconds) || seconds < 0) return "--:--";
     const m = Math.floor(seconds / 60);
@@ -631,7 +644,8 @@
         consecutiveErrors = 0;
         el.now.textContent = currentTrack().title;
         el.hint.textContent = currentTrack().src;
-        setStatus(tracks.length + " tracks in rotation");
+        updateTrackCountDisplay();
+        setStatus("");
         radioLog(
           "info",
           "Playlist loaded: " +
@@ -805,6 +819,7 @@
 
   loadPlaylist().catch((e) => {
     el.now.textContent = "Could not load playlist";
+    if (el.trackCount) el.trackCount.textContent = "";
     const msg = String(e && e.message ? e.message : e);
     radioLog(
       "error",

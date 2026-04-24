@@ -1,11 +1,34 @@
-This folder holds the render pool for RozKyler Radio (copied from your Music_Archives Renders mirror).
+GitHub limits (plain English; see URLs for exact wording)
 
-Audio files (*.mp3, *.wav, etc.) are gitignored so normal git push stays small.
+REPOSITORY / GIT (all plans)
+  https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits
+  - Single file in normal Git: enforced max 100 MB (use Git LFS above that).
+  - Push size: max 2 GB per push.
+  - GitHub recommends keeping repos small (on-disk under ~1 GB ideal, under ~5 GB strongly recommended).
 
-Ways to ship audio for GitHub Pages:
-  1) Git LFS — track these extensions in .gitattributes; still respect GitHub bandwidth and storage limits.
-  2) Host files elsewhere — put HTTPS URLs in playlist.json (edit or regenerate). Player already supports absolute http(s) src.
-  3) GitHub Release — attach a zip of Renders; not ideal for hundreds of individual track URLs unless you script URL generation.
-  4) Remove the audio lines from .gitignore here and commit the pool only if the repo stays under GitHub size limits (often impractical for full WAV masters).
+LARGE FILES (plain Git vs LFS)
+  https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github
+  - Over 50 MB: warning.
+  - Over 100 MB: push blocked unless using Git LFS.
 
-For github.io with everything in one repo, LFS or external static hosting (S3, Cloudflare R2, Backblaze, etc.) is the usual approach.
+GIT LFS (if you use it for WAVs etc.)
+  https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-git-large-file-storage
+  https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-git-large-file-storage/about-billing-for-git-large-file-storage
+  - GitHub Free: 2 GB max per LFS file; includes quota (see billing doc for current included storage/bandwidth).
+  - Docs also note Git LFS is not wired into GitHub Pages the way small static files are; for Actions-based Pages deploy, checkout with LFS and materialize files before upload so the published site contains real media, not pointer text.
+
+GITHUB PAGES (published site)
+  https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits
+  - Published site size: max 1 GB.
+  - Soft bandwidth: 100 GB/month.
+  - Deploy timeout: 10 minutes.
+
+THIS POOL ON DISK (radio/Renders)
+  - Total audio ~2.8 GB, ~209 files: too large for a single 1 GB Pages site if you publish everything.
+  - Three WAVs are over 100 MB (plain Git will reject): Drifting_10min.wav (~203 MB), colab tapes #1.wav (~131 MB), 2023_EP_new_tracklist.wav (~387 MB).
+  - MP3-only subset is ~0.46 GB across 157 files: fits the 1 GB Pages limit with room for the HTML/JS/CSS.
+
+PRACTICAL "COMMIT + PAGES" APPROACH HERE
+  - .gitignore keeps .wav / .flac out of git; commit .mp3 under Renders/ so pushes succeed and Pages stays under 1 GB.
+  - playlist.json is built with: build-playlist.ps1 ... -Extensions .mp3
+  - Keep lossless only on your machine or in Music_Archives; add MP3 renders later if you want those tracks on the radio.

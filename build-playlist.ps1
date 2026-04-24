@@ -11,6 +11,9 @@
 .PARAMETER OutFile
   Output JSON path (default: radio/playlist.json next to this script).
 
+.PARAMETER Extensions
+  File extensions to include (default: .mp3 .wav .flac .m4a .ogg). Example for GitHub Pages: -Extensions .mp3
+
 .EXAMPLE
   cd E:\Music_Archives\Projects\RozKyler\radio
   .\build-playlist.ps1
@@ -25,7 +28,8 @@
 param(
   [string] $ScanRoot = "",
   [string] $HttpRoot = "",
-  [string] $OutFile = (Join-Path $PSScriptRoot "playlist.json")
+  [string] $OutFile = (Join-Path $PSScriptRoot "playlist.json"),
+  [string[]] $Extensions = @(".mp3", ".wav", ".flac", ".m4a", ".ogg")
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,9 +79,13 @@ function Get-UrlPathRelativeToRoot {
   [Uri]::UnescapeDataString($rel) -replace '\\', '/'
 }
 
-$ext = @(".mp3", ".wav", ".flac", ".m4a", ".ogg")
+$ext = foreach ($e in $Extensions) {
+  $x = $e.Trim().ToLowerInvariant()
+  if (-not $x.StartsWith(".")) { $x = "." + $x }
+  $x
+}
 $allFiles = Get-ChildItem -LiteralPath $scan.Path -Recurse -File -ErrorAction SilentlyContinue |
-  Where-Object { $ext -contains $_.Extension.ToLower() }
+  Where-Object { $ext -contains $_.Extension.ToLowerInvariant() }
 
 # Consolidated pool under Music_Archives\Renders: include all audio under the scan tree.
 # Else (in-project scan): only files under a path segment named Renders.

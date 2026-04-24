@@ -2,11 +2,8 @@
 Thumbs.db
 *.tmp
 
-# Renders pool: keep binaries out of git by default (size + GitHub limits).
-# See Renders/_SHIPPING.txt. To commit audio, remove these lines or switch to Git LFS.
-/Renders/**/*.mp3
+# GitHub: plain Git blocks files >100 MB; Pages published site max 1 GB.
+# Ship lossy MP3 in git; keep huge lossless out (still on disk locally).
 /Renders/**/*.wav
 /Renders/**/*.flac
-/Renders/**/*.m4a
-/Renders/**/*.ogg
 /Renders/**/_robocopy_log.txt

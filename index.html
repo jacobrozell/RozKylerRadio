@@ -4,6 +4,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RozKyler Archives</title>
+    <meta
+      name="description"
+      content="Shuffle radio from the RozKyler beat archive — instrumentals, variants, and play history."
+    />
+    <meta name="theme-color" content="#0a0a0c" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="RozKyler Archives" />
+    <meta
+      property="og:description"
+      content="Live shuffle radio from the RozKyler beat archive."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23141418'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%23c9a227' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23c9a227'/%3E%3C/svg%3E"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,7 +29,7 @@
     <script src="config.js"></script>
   </head>
   <body>
-    <main id="radio-panel">
+    <main id="radio-panel" class="is-loading" aria-busy="true">
       <h1>Live from the archive</h1>
       <p class="station-name">RozKyler Archives</p>
       <p class="track-count" id="track-count" aria-live="polite">Loading…</p>
@@ -56,26 +71,77 @@
           </svg>
         </button>
       </div>
-      <div id="path-hint"></div>
+      <div id="path-hint" class="path-hint" hidden></div>
       <div class="time-block" id="time-block">
         <div id="time-display" class="time-display" aria-live="polite">0:00 / --:--</div>
-        <div class="time-progress" aria-hidden="true">
-          <div class="time-progress-fill"></div>
-        </div>
+        <button
+          type="button"
+          class="time-progress"
+          id="time-progress"
+          aria-label="Seek in track"
+        >
+          <span class="time-progress-fill" aria-hidden="true"></span>
+        </button>
       </div>
       <div class="controls">
         <button type="button" id="btn-prev" aria-label="Previous track" disabled>Prev</button>
-        <button type="button" id="btn-play">Play</button>
+        <button type="button" id="btn-play" class="is-paused" aria-label="Play">
+          <span class="btn-play-icon" aria-hidden="true"></span>
+          <span class="sr-only" id="btn-play-label">Play</span>
+        </button>
         <button type="button" id="btn-next" aria-label="Next track">Next</button>
+        <button
+          type="button"
+          id="btn-shuffle"
+          class="btn-shuffle"
+          aria-label="Shuffle rotation"
+          title="New shuffle order"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="16 3 21 3 21 8" />
+            <line x1="4" y1="20" x2="21" y2="3" />
+            <polyline points="21 16 21 21 16 21" />
+            <line x1="15" y1="15" x2="21" y2="21" />
+            <line x1="4" y1="4" x2="9" y2="9" />
+          </svg>
+        </button>
       </div>
       <section class="track-picker-block" aria-labelledby="track-picker-heading">
         <h2 id="track-picker-heading" class="history-heading">All tracks</h2>
-        <p class="track-picker-hint">Tap a title to play it (A–Z).</p>
+        <label class="track-picker-search-label" for="track-picker-search">Search</label>
+        <div class="track-picker-search-row">
+          <input
+            type="search"
+            id="track-picker-search"
+            class="track-picker-search"
+            placeholder="Filter by title…"
+            autocomplete="off"
+            enterkeyhint="search"
+          />
+          <button
+            type="button"
+            id="track-picker-clear"
+            class="track-picker-clear"
+            hidden
+            aria-label="Clear search"
+          >
+            ×
+          </button>
+        </div>
+        <p class="track-picker-hint" id="track-picker-hint">Tap a title to play it (A–Z).</p>
         <ul id="track-picker-list" class="variant-list track-picker-list"></ul>
       </section>
       <label class="volume">
-        <span>Vol</span>
-        <input type="range" id="volume" min="0" max="1" step="0.02" value="0.9" />
+        <span class="volume-label" aria-hidden="true">Vol</span>
+        <input
+          type="range"
+          id="volume"
+          min="0"
+          max="1"
+          step="0.02"
+          value="0.9"
+          aria-label="Volume"
+        />
       </label>
       <div id="status" class="status"></div>
       <section class="history-block" aria-labelledby="history-heading">
@@ -95,12 +161,6 @@
         <p id="history-empty" class="history-empty">Plays group here by similar titles.</p>
         <div id="history-list" class="history-list" hidden></div>
       </section>
-      <footer>
-        Serve this repo root over HTTP (e.g. <code>npx serve</code> in the
-        repo folder). See <code>Renders/_SHIPPING.txt</code> for how to publish
-        audio with GitHub Pages. Optional anonymous likes: see
-        <code>like-discord-setup.txt</code>.
-      </footer>
     </main>
     <div
       id="share-history-sheet"

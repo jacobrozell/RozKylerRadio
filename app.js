@@ -57,9 +57,14 @@
 
   const likeEndpoint = (cfg.likeEndpoint || "").trim();
   const likeSecret = cfg.likeSecret || "";
+  const showPathHint = !!cfg.debug;
   /** Per track (`src`): block another like for this long (persists across revisits). */
   const LIKE_PER_TRACK_COOLDOWN_MS = 10 * 60 * 1000;
   const LIKE_STORAGE_KEY = "RozKylerArchives_trackLikeAt_v1";
+  const VOLUME_STORAGE_KEY = "RozKylerArchives_volume_v1";
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
   let likeCooldownUiTimer = 0;
   let likeRequestInFlight = false;
 
@@ -73,12 +78,18 @@
     timeDisplay: document.getElementById("time-display"),
     timeBlock: document.getElementById("time-block"),
     btnPlay: document.getElementById("btn-play"),
+    btnPlayLabel: document.getElementById("btn-play-label"),
     btnPrev: document.getElementById("btn-prev"),
     btnNext: document.getElementById("btn-next"),
+    btnShuffle: document.getElementById("btn-shuffle"),
     btnLike: document.getElementById("btn-like"),
     volume: document.getElementById("volume"),
     variantList: document.getElementById("variant-list"),
     trackPickerList: document.getElementById("track-picker-list"),
+    trackPickerSearch: document.getElementById("track-picker-search"),
+    trackPickerClear: document.getElementById("track-picker-clear"),
+    trackPickerHint: document.getElementById("track-picker-hint"),
+    timeProgress: document.getElementById("time-progress"),
     historyList: document.getElementById("history-list"),
     historyEmpty: document.getElementById("history-empty"),
     nowTitleDetails: document.getElementById("now-title-details"),
@@ -93,11 +104,52 @@
 
   const HISTORY_CAP = 80;
 
+  let trackPickerFilter = "";
+
   const PLAY_HISTORY_SHARE_INTRO = "I listened to RozKyler radio:\n\n";
   const PLAY_HISTORY_SHARE_FILENAME = "rozkylerradio-play-history.txt";
 
   /** @type {Element | null} */
   let shareSheetReturnFocus = null;
+
+  function formatDisplayTitle(title) {
+    return String(title || "")
+      .replace(/_/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function setPlayButtonState(isPlaying) {
+    if (!el.btnPlay) return;
+    el.btnPlay.classList.toggle("is-playing", isPlaying);
+    el.btnPlay.classList.toggle("is-paused", !isPlaying);
+    const label = isPlaying ? "Pause" : "Play";
+    el.btnPlay.setAttribute("aria-label", label);
+    if (el.btnPlayLabel) el.btnPlayLabel.textContent = label;
+  }
+
+  function setPanelLoading(loading) {
+    if (!el.panel) return;
+    el.panel.classList.toggle("is-loading", loading);
+    el.panel.setAttribute("aria-busy", loading ? "true" : "false");
+  }
+
+  function updateVariantDetailsState() {
+    if (!el.nowTitleDetails) return;
+    const t = currentTrack();
+    if (!t) return;
+    const key = trackGroupKey(t.title);
+    const indices = groupToIndices.get(key);
+    const single = !indices || indices.length <= 1;
+    el.nowTitleDetails.classList.toggle("is-single-variant", single);
+    if (single) el.nowTitleDetails.open = false;
+  }
+
+  function updateTrackPickerClearButton() {
+    if (!el.trackPickerClear) return;
+    const hasFilter = trackPickerFilter.trim().length > 0;
+    el.trackPickerClear.hidden = !hasFilter;
+  }
 
   /** Suffixes stripped from the end of titles to group “versions” (fade mix N, _2, v2, …). */
   const VERSION_TAIL_RES = [
@@ -201,7 +253,11 @@
     for (let i = playHistory.length - 1; i >= 0; i--) {
       const e = playHistory[i];
       const when = formatHistoryWhen(e.at);
-      lines.push(when ? "- " + e.title + " (" + when + ")" : "- " + e.title);
+      lines.push(
+        when
+          ? "- " + formatDisplayTitle(e.title) + " (" + when + ")"
+          : "- " + formatDisplayTitle(e.title)
+      );
     }
     return PLAY_HISTORY_SHARE_INTRO + lines.join("\n") + "\n";
   }
@@ -306,7 +362,7 @@
       const k = trackGroupKey(e.title);
       if (!groups.has(k)) {
         groups.set(k, {
-          label: stripVersionSuffixes(e.title) || e.title,
+          label: formatDisplayTitle(stripVersionSuffixes(e.title) || e.title),
           plays: [],
         });
       }
@@ -340,7 +396,7 @@
         const li = document.createElement("li");
         const t1 = document.createElement("span");
         t1.className = "history-play-title";
-        t1.textContent = p.title;
+        t1.textContent = formatDisplayTitle(p.title);
         const t2 = document.createElement("span");
         t2.className = "history-play-when";
         t2.textContent = formatHistoryWhen(p.at);
@@ -370,12 +426,12 @@
       const li = document.createElement("li");
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.textContent = tr.title;
+      btn.textContent = formatDisplayTitle(tr.title);
       if (ti === curIdx) {
         btn.classList.add("is-current");
         btn.disabled = true;
         btn.setAttribute("aria-current", "true");
-        btn.setAttribute("aria-label", "Now playing: " + tr.title);
+        btn.setAttribute("aria-label", "Now playing: " + formatDisplayTitle(tr.title));
       } else {
         btn.addEventListener("click", () => {
           playTrackByIndex(ti);
@@ -385,6 +441,7 @@
       li.appendChild(btn);
       ul.appendChild(li);
     }
+    updateVariantDetailsState();
   }
 
   function renderTrackPickerList() {
@@ -392,6 +449,8 @@
     if (!ul) return;
     ul.innerHTML = "";
     if (!tracks.length) return;
+
+    const filter = trackPickerFilter.trim().toLowerCase();
     const sortedIndices = tracks
       .map((_, i) => i)
       .sort((a, b) =>
@@ -399,18 +458,54 @@
           sensitivity: "base",
         })
       );
-    const curIdx = order[orderIndex];
+
+    /** @type {Map<string, number[]>} */
+    const pickerGroups = new Map();
     for (const ti of sortedIndices) {
+      const label =
+        formatDisplayTitle(stripVersionSuffixes(tracks[ti].title)) ||
+        formatDisplayTitle(tracks[ti].title);
+      const key = trackGroupKey(tracks[ti].title);
+      if (!pickerGroups.has(key)) {
+        pickerGroups.set(key, { label: label, indices: [] });
+      }
+      pickerGroups.get(key).indices.push(ti);
+    }
+
+    const curIdx = order[orderIndex];
+    let visibleCount = 0;
+
+    for (const group of pickerGroups.values()) {
+      const label = group.label;
+      const indices = group.indices;
+      const haystack = (
+        label +
+        " " +
+        indices.map((i) => tracks[i].title).join(" ")
+      ).toLowerCase();
+      if (filter && !haystack.includes(filter)) continue;
+
+      visibleCount++;
+      const ti = indices.includes(curIdx) ? curIdx : indices[0];
       const tr = tracks[ti];
       const li = document.createElement("li");
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.textContent = tr.title;
+      const titleSpan = document.createElement("span");
+      titleSpan.textContent = label;
+      btn.appendChild(titleSpan);
+      if (indices.length > 1) {
+        const meta = document.createElement("span");
+        meta.className = "track-picker-variant-meta";
+        meta.textContent =
+          indices.length === 1 ? "" : indices.length + " versions";
+        btn.appendChild(meta);
+      }
       if (ti === curIdx) {
         btn.classList.add("is-current");
         btn.disabled = true;
         btn.setAttribute("aria-current", "true");
-        btn.setAttribute("aria-label", "Now playing: " + tr.title);
+        btn.setAttribute("aria-label", "Now playing: " + formatDisplayTitle(tr.title));
       } else {
         btn.addEventListener("click", () => {
           playTrackByIndex(ti);
@@ -418,6 +513,26 @@
       }
       li.appendChild(btn);
       ul.appendChild(li);
+      if (ti === curIdx && !filter) {
+        requestAnimationFrame(() => {
+          btn.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        });
+      }
+    }
+
+    updateTrackPickerClearButton();
+
+    if (el.trackPickerHint) {
+      if (!filter) {
+        el.trackPickerHint.textContent = "Tap a title to play it (A–Z).";
+      } else if (!visibleCount) {
+        el.trackPickerHint.textContent = "No tracks match your search.";
+      } else {
+        el.trackPickerHint.textContent =
+          visibleCount === 1
+            ? "1 match — tap to play."
+            : visibleCount + " matches — tap to play.";
+      }
     }
   }
 
@@ -425,6 +540,26 @@
     if (trackIndex < 0 || trackIndex >= tracks.length) return;
     order[orderIndex] = trackIndex;
     playCurrent();
+  }
+
+  function shuffleRotation() {
+    if (!tracks.length) return;
+    const curIdx = order[orderIndex];
+    rebuildOrder(curIdx);
+    const newPos = order.indexOf(curIdx);
+    orderIndex = newPos >= 0 ? newPos : 0;
+    if (el.btnShuffle) {
+      el.btnShuffle.classList.add("is-spinning");
+      window.setTimeout(() => {
+        if (el.btnShuffle) el.btnShuffle.classList.remove("is-spinning");
+      }, 450);
+    }
+    setStatus("New shuffle order — next track is a surprise.", false);
+    updatePrevButtonState();
+    renderVariantList();
+    updateVariantDetailsState();
+    renderTrackPickerList();
+    updateMediaSession();
   }
 
   const GLOW_HZ_BASS_LOW = 40;
@@ -510,6 +645,105 @@
     el.status.classList.toggle("error", !!isError);
   }
 
+  function updatePathHint(src) {
+    if (!el.hint) return;
+    if (!showPathHint) {
+      el.hint.hidden = true;
+      el.hint.textContent = "";
+      return;
+    }
+    el.hint.hidden = false;
+    el.hint.textContent = src || "";
+  }
+
+  function updateMediaSession() {
+    if (!("mediaSession" in navigator)) return;
+    const t = currentTrack();
+    if (!t) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: formatDisplayTitle(t.title),
+        artist: "RozKyler Archives",
+        album: "Archive radio",
+      });
+    } catch (_e) {
+      /* MediaMetadata unsupported */
+    }
+    const setHandler = (action, fn) => {
+      try {
+        navigator.mediaSession.setActionHandler(action, fn);
+      } catch (_e) {
+        /* action unsupported */
+      }
+    };
+    setHandler("play", () => {
+      void el.player.play();
+    });
+    setHandler("pause", () => {
+      el.player.pause();
+    });
+    setHandler("previoustrack", () => {
+      goPrev();
+    });
+    setHandler("nexttrack", () => {
+      advance();
+    });
+    navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+    updateMediaSessionPosition();
+  }
+
+  function updateMediaSessionPosition() {
+    if (!("mediaSession" in navigator)) return;
+    if (typeof navigator.mediaSession.setPositionState !== "function") return;
+    const dur = el.player.duration;
+    const cur = el.player.currentTime;
+    if (!Number.isFinite(dur) || dur <= 0) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: dur,
+        playbackRate: el.player.playbackRate || 1,
+        position: Math.min(cur, dur),
+      });
+    } catch (_e) {
+      /* unsupported */
+    }
+  }
+
+  function seekFromClientX(clientX) {
+    const bar = el.timeProgress;
+    const dur = el.player.duration;
+    if (!bar || !Number.isFinite(dur) || dur <= 0) return;
+    const rect = bar.getBoundingClientRect();
+    if (!rect.width) return;
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    el.player.currentTime = ratio * dur;
+    updateTimeDisplay();
+  }
+
+  function restoreVolume() {
+    if (!el.volume) return;
+    try {
+      const saved = localStorage.getItem(VOLUME_STORAGE_KEY);
+      if (saved == null) return;
+      const v = Number(saved);
+      if (!Number.isFinite(v)) return;
+      const clamped = Math.min(1, Math.max(0, v));
+      el.volume.value = String(clamped);
+      el.player.volume = clamped;
+    } catch (_e) {
+      /* private mode / blocked storage */
+    }
+  }
+
+  function persistVolume() {
+    if (!el.volume) return;
+    try {
+      localStorage.setItem(VOLUME_STORAGE_KEY, el.volume.value);
+    } catch (_e) {
+      /* ignore */
+    }
+  }
+
   function updateTrackCountDisplay() {
     const node = el.trackCount;
     if (!node) return;
@@ -518,8 +752,16 @@
       node.textContent = "";
       return;
     }
+    const families = groupToIndices.size;
+    if (n === 1) {
+      node.textContent = "1 track in rotation";
+      return;
+    }
     node.textContent =
-      n === 1 ? "1 track in rotation" : n + " tracks in rotation";
+      n +
+      " tracks" +
+      (families < n ? " · " + families + " families" : "") +
+      " in rotation";
   }
 
   function formatTime(seconds) {
@@ -542,6 +784,7 @@
           : 0;
       el.timeBlock.style.setProperty("--progress", String(p));
     }
+    updateMediaSessionPosition();
   }
 
   function updatePrevButtonState() {
@@ -601,7 +844,7 @@
 
   function tickGlow() {
     glowRafId = 0;
-    if (!glowGraphOk || !glowAnalyser || el.player.paused) {
+    if (prefersReducedMotion || !glowGraphOk || !glowAnalyser || el.player.paused) {
       resetGlowCss();
       return;
     }
@@ -614,7 +857,7 @@
   }
 
   function startGlowLoop() {
-    if (!glowGraphOk || el.player.paused) return;
+    if (prefersReducedMotion || !glowGraphOk || el.player.paused) return;
     if (glowRafId) cancelAnimationFrame(glowRafId);
     glowRafId = requestAnimationFrame(tickGlow);
   }
@@ -761,6 +1004,7 @@
     const t = currentTrack();
     if (!t) {
       el.btnLike.disabled = true;
+      el.btnLike.classList.remove("is-liked");
       el.btnLike.title = "No track loaded";
       return;
     }
@@ -773,6 +1017,7 @@
     const left = remainingLikeCooldownMs(t.src, now);
     if (left > 0) {
       el.btnLike.disabled = true;
+      el.btnLike.classList.add("is-liked");
       el.btnLike.title =
         "You liked this track recently. Like again in " +
         formatLikeCooldownRemaining(left) +
@@ -785,6 +1030,7 @@
       return;
     }
     el.btnLike.disabled = false;
+    el.btnLike.classList.remove("is-liked");
     el.btnLike.title = "Send anonymous like for this track";
   }
 
@@ -865,6 +1111,7 @@
   }
 
   function loadPlaylist() {
+    setPanelLoading(true);
     return fetch(playlistUrl)
       .then((r) => {
         if (!r.ok) throw new Error("Playlist HTTP " + r.status);
@@ -892,10 +1139,11 @@
         rebuildOrder();
         rebuildGroupIndex();
         consecutiveErrors = 0;
-        el.now.textContent = currentTrack().title;
-        el.hint.textContent = currentTrack().src;
+        el.now.textContent = formatDisplayTitle(currentTrack().title);
+        updatePathHint(currentTrack().src);
         updateTrackCountDisplay();
         setStatus("");
+        setPanelLoading(false);
         radioLog(
           "info",
           "Playlist loaded: " +
@@ -911,6 +1159,7 @@
         renderVariantList();
         renderTrackPickerList();
         renderHistory();
+        updateMediaSession();
       });
   }
 
@@ -920,8 +1169,8 @@
     recordPlayHistory();
     stopGlowLoop();
     el.player.src = t.src;
-    el.now.textContent = t.title;
-    el.hint.textContent = t.src;
+    el.now.textContent = formatDisplayTitle(t.title);
+    updatePathHint(t.src);
     renderVariantList();
     renderTrackPickerList();
     updatePrevButtonState();
@@ -938,12 +1187,13 @@
         await el.player.play();
         playing = true;
         consecutiveErrors = 0;
-        el.btnPlay.textContent = "Pause";
+        setPlayButtonState(true);
         setStatus("");
         startGlowLoop();
+        updateMediaSession();
       } catch (err) {
         playing = false;
-        el.btnPlay.textContent = "Play";
+        setPlayButtonState(false);
         stopGlowLoop();
         radioLog(
           "error",
@@ -976,8 +1226,9 @@
     if (playing) {
       el.player.pause();
       playing = false;
-      el.btnPlay.textContent = "Play";
+      setPlayButtonState(false);
       stopGlowLoop();
+      updateMediaSession();
       return;
     }
     if (!el.player.src) {
@@ -988,8 +1239,9 @@
           await initGlowGraphOnFirstPlay();
           await el.player.play();
           playing = true;
-          el.btnPlay.textContent = "Pause";
+          setPlayButtonState(true);
           startGlowLoop();
+          updateMediaSession();
         } catch (err) {
           stopGlowLoop();
           radioLog("error", "resume play() failed:", err);
@@ -1056,12 +1308,106 @@
 
   el.volume.addEventListener("input", () => {
     el.player.volume = Number(el.volume.value);
+    persistVolume();
   });
 
+  restoreVolume();
   el.player.volume = Number(el.volume.value);
 
+  if (el.btnShuffle) {
+    el.btnShuffle.addEventListener("click", () => {
+      shuffleRotation();
+    });
+  }
+
+  if (el.trackPickerSearch) {
+    el.trackPickerSearch.addEventListener("input", () => {
+      trackPickerFilter = el.trackPickerSearch.value;
+      renderTrackPickerList();
+    });
+  }
+
+  if (el.trackPickerClear) {
+    el.trackPickerClear.addEventListener("click", () => {
+      trackPickerFilter = "";
+      if (el.trackPickerSearch) {
+        el.trackPickerSearch.value = "";
+        el.trackPickerSearch.focus();
+      }
+      renderTrackPickerList();
+    });
+  }
+
+  if (el.timeProgress) {
+    el.timeProgress.addEventListener("click", (ev) => {
+      seekFromClientX(ev.clientX);
+    });
+    el.timeProgress.addEventListener("pointerdown", (ev) => {
+      if (ev.button !== 0) return;
+      el.timeProgress.classList.add("is-seeking");
+      el.timeProgress.setPointerCapture(ev.pointerId);
+      seekFromClientX(ev.clientX);
+    });
+    el.timeProgress.addEventListener("pointermove", (ev) => {
+      if (!el.timeProgress.classList.contains("is-seeking")) return;
+      seekFromClientX(ev.clientX);
+    });
+    const endSeek = (ev) => {
+      if (!el.timeProgress.classList.contains("is-seeking")) return;
+      el.timeProgress.classList.remove("is-seeking");
+      try {
+        el.timeProgress.releasePointerCapture(ev.pointerId);
+      } catch (_e) {
+        /* ignore */
+      }
+    };
+    el.timeProgress.addEventListener("pointerup", endSeek);
+    el.timeProgress.addEventListener("pointercancel", endSeek);
+  }
+
+  document.addEventListener("keydown", (ev) => {
+    const target = /** @type {HTMLElement | null} */ (ev.target);
+    const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
+    const typing =
+      tag === "input" ||
+      tag === "textarea" ||
+      tag === "select" ||
+      (target && target.isContentEditable);
+    if (typing) return;
+    if (!tracks.length) return;
+
+    if (ev.key === "/" && !ev.metaKey && !ev.ctrlKey && !ev.altKey) {
+      ev.preventDefault();
+      if (el.trackPickerSearch) el.trackPickerSearch.focus();
+      return;
+    }
+    if (ev.key === " " || ev.code === "Space") {
+      ev.preventDefault();
+      el.btnPlay.click();
+      return;
+    }
+    if (ev.key === "ArrowRight") {
+      ev.preventDefault();
+      advance();
+      return;
+    }
+    if (ev.key === "ArrowLeft") {
+      ev.preventDefault();
+      goPrev();
+    }
+  });
+
+  el.player.addEventListener("play", () => {
+    playing = true;
+    setPlayButtonState(true);
+    updateMediaSession();
+  });
+
   el.player.addEventListener("pause", () => {
+    playing = false;
+    if (el.btnPlay) setPlayButtonState(false);
     stopGlowLoop();
+    updateMediaSession();
   });
 
   el.player.addEventListener("ended", () => {
@@ -1084,7 +1430,7 @@
     stopGlowLoop();
     if (consecutiveErrors >= maxConsecutiveErrors) {
       playing = false;
-      el.btnPlay.textContent = "Play";
+      setPlayButtonState(false);
       setStatus(
         "Several tracks failed to load (wrong paths or missing files). " +
           "If the site is under /YourRepo/, remove mediaBase: '/' from config.js " +
@@ -1106,7 +1452,10 @@
   el.player.addEventListener("loadedmetadata", updateTimeDisplay);
   el.player.addEventListener("durationchange", updateTimeDisplay);
 
+  setPlayButtonState(false);
+
   loadPlaylist().catch((e) => {
+    setPanelLoading(false);
     el.now.textContent = "Could not load playlist";
     if (el.trackCount) el.trackCount.textContent = "";
     const msg = String(e && e.message ? e.message : e);

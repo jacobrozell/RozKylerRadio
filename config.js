@@ -4,6 +4,7 @@
 //
 // Only set mediaBase if audio lives elsewhere on the same host, e.g. serve the app from
 // /Projects/.../radio/ but files at /Renders/... then: mediaBase: "/"
+// Optional: set debug: true to show raw audio URLs under Now playing.
 window.RADIO_CONFIG = {
   basePath: "",
   playlistUrl: "playlist.json",

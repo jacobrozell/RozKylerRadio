@@ -2,6 +2,9 @@
 
 Shuffle radio for the **RozKyler Archives** — a static web player over your consolidated `Renders/` pool. Hosted on GitHub Pages; no build step for the UI itself.
 
+**Status:** Live on GitHub Pages · static site · no app versioning
+
+---
 ## Live site
 
 Push to `main` deploys via GitHub Actions (see `.github/workflows/pages.yml`). Enable **Pages → Build: GitHub Actions** once in repo settings.
